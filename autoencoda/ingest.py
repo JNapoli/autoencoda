@@ -90,6 +90,53 @@ def get_tracks_with_previews(artist_id, spotify):
     ]
 
 
+def add_spotify_audio_features(track_list, spotify):
+    """
+    """
+    for track in track_list:
+
+        # Get precomputed audio features.
+        audio_features = spotify.audio_features(track['track_id'])[0]
+        track['popularity'] = spotify.track(track['track_id'])['popularity']
+
+        # Add numerical features to the data.
+        for feature, value in audio_features.items():
+            if not feature in track:
+                track[feature] = value
+
+    return track_list
+
+
+def fetch_mp3_files(track_list, dir_save_base):
+    """
+    """
+    if not os.path.exists(dir_save_base):
+        os.mkdir(dir_save_base)
+
+    for track in track_list:
+        dir_track_data = os.path.join(dir_save_base,
+                                      'track_{}'.format(track['track_id']))
+        if not os.path.exists(dir_track_data):
+            os.mkdir(dir_track_data)
+        path_mp3 = os.path.join(dir_track_data, 'preview.mp3')
+        wget.download(track['preview_url'], path_mp3)
+        track['path_mp3'] = path_mp3
+
+    return track_list
+
+
+def compute_spectrograms(track_list, **kwargs_spec):
+    """
+    """
+    for track in track_list:
+        audio, sr = librosa.load(track['path_mp3'])
+        sg = librosa.feature.melspectrogram(y=audio, sr=sr, **kwargs_spec)
+        track['spectrogram'] = sg
+        track['sr'] = sr
+
+    return track_list
+
+
 def main():
     logging.basicConfig(filename='ingestion.log',
                         level=logging.DEBUG)
