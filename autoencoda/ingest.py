@@ -137,10 +137,40 @@ def compute_spectrograms(track_list, **kwargs_spec):
     return track_list
 
 
-def main():
+def main(args):
     logging.basicConfig(filename='ingestion.log',
                         level=logging.DEBUG)
+    with open(args.path_artists, 'r') as f:
+        artist_URIs = [
+            line.strip() for line in f.readlines()
+        ]
+    try:
+        assert len(artist_URIs) > 0
+    except AssertionError:
+        logging.exception('The artist list is empty.')
+    logging.info('Initializing Spotify instance...')
+    spotify = get_spotify_instance(args.spotify_client_id,
+                                   args.spotify_client_secret)
+    logging.info('Done.')
+    t0 = time.time()
+    n_tracks_processed = 0
+    # Fetch data for each artist in our list.
+    # Monitor time it takes per artist in order to keep an eye on cost.
+    for i, artist_URI in enumerate(artist_URIs, start=1):
+        # Subselect tracks that have previews.
+        artist_tracks = get_tracks_with_previews(artist_URI, spotify)
+        n_tracks_processed += len(artist_tracks)
+        # Add some precomputed features by Spotify.
+        artist_tracks = add_spotify_audio_features(artist_tracks, spotify)
+        # Get mp3s from the web and save them.
+        artist_tracks = fetch_mp3_files(artist_tracks,
+                                        args.path_data_storage)
+        # Compute the spectrograms.
+        artist_tracks = compute_spectrograms(artist_tracks)
+        # Timing per track processed:
+        elapsed_per_track = (time.time() - t0) / float(n_tracks_processed)
+    logging.info('Processing took {:.2f} seconds per track.'.format(elapsed_per_track))
 
 
 if __name__ == '__main__':
-    pass
+    main(args)
