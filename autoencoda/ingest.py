@@ -1,4 +1,5 @@
 import argparse
+import json
 import librosa
 import logging
 import os
@@ -6,7 +7,6 @@ import spotipy
 import time
 import wget
 
-import numpy as np
 import spotipy.util as su
 
 
@@ -34,6 +34,11 @@ parser.add_argument('--path_data_storage',
                     default='../data/data_store',
                     help='Directory in which to store mp3 files and other track \
                     data.')
+parser.add_argument('--path_data_set_base',
+                    required=True,
+                    default='../data/processed/',
+                    help='Base directory containing data sets as json entries, \
+                    one for each artist.')
 args = parser.parse_args()
 
 
@@ -94,7 +99,6 @@ def add_spotify_audio_features(track_list, spotify):
     """
     """
     for track in track_list:
-
         # Get precomputed audio features.
         audio_features = spotify.audio_features(track['track_id'])[0]
         track['popularity'] = spotify.track(track['track_id'])['popularity']
@@ -111,6 +115,7 @@ def fetch_mp3_files(track_list, dir_save_base):
     """
     """
     if not os.path.exists(dir_save_base):
+        logging.info('Creating base directory for mp3s at {}.'.format(dir_save_base))
         os.mkdir(dir_save_base)
 
     for track in track_list:
@@ -133,8 +138,22 @@ def compute_spectrograms(track_list, **kwargs_spec):
         sg = librosa.feature.melspectrogram(y=audio, sr=sr, **kwargs_spec)
         track['spectrogram'] = sg
         track['sr'] = sr
-
     return track_list
+
+
+def cache_artist_data_json(artist_tracks, dir_base):
+    """
+    """
+    # Save data for each artist separately. Makes it easier for us to query
+    # by genre or time period.
+    assert len(artist_tracks) > 0
+    if not os.path.exists(dir_base): os.mkdir(dir_base)
+    artist_id = artist_tracks[0]['artist_id']
+    path_json_artist = os.path.join(dir_base,
+                                    artist_id + '.json')
+    with open(path_json_artist, 'wb') as f_json:
+        json.dump(artist_tracks, f_json, indent=4)
+    return None
 
 
 def main(args):
@@ -156,9 +175,11 @@ def main(args):
     n_tracks_processed = 0
     # Fetch data for each artist in our list.
     # Monitor time it takes per artist in order to keep an eye on cost.
-    for i, artist_URI in enumerate(artist_URIs, start=1):
+    for artist_URI in artist_URIs:
         # Subselect tracks that have previews.
         artist_tracks = get_tracks_with_previews(artist_URI, spotify)
+        if len(artist_tracks) == 0:
+            continue
         n_tracks_processed += len(artist_tracks)
         # Add some precomputed features by Spotify.
         artist_tracks = add_spotify_audio_features(artist_tracks, spotify)
@@ -167,8 +188,11 @@ def main(args):
                                         args.path_data_storage)
         # Compute the spectrograms.
         artist_tracks = compute_spectrograms(artist_tracks)
-        # Timing per track processed:
-        elapsed_per_track = (time.time() - t0) / float(n_tracks_processed)
+        # Cache our results.
+        cache_artist_data_json(artist_tracks, args.path_data_set_base)
+
+    # Timing per track processed
+    elapsed_per_track = (time.time() - t0) / float(n_tracks_processed)
     logging.info('Processing took {:.2f} seconds per track.'.format(elapsed_per_track))
 
 
