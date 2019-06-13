@@ -2,6 +2,7 @@ import argparse
 import billboard
 import logging
 import pickle
+import requests
 import time
 
 
@@ -25,15 +26,18 @@ args = parser.parse_args()
 def get_hot_100_set(stop_date, chart):
     """
     """
-    appeared_hot_100 = {
+    appeared_hot_100 = [
         (elem.title, elem.artist) for elem in chart
-    }
+    ]
     while chart.previousDate > stop_date:
         logging.info('Date {:s}'.format(chart.previousDate))
-        chart = billboard.ChartData('hot-100', date=chart.previousDate)
-        appeared_hot_100.update([
-            (elem.title, elem.artist) for elem in chart
-        ])
+        try:
+            chart = billboard.ChartData('hot-100', date=chart.previousDate)
+            appeared_hot_100.extend([
+                (elem.title, elem.artist) for elem in chart
+            ])
+        except requests.exceptions.ReadTimeout:
+            logging.info('Logging a caught timeout exception and continuing.')
     return appeared_hot_100
 
 
@@ -41,8 +45,9 @@ def main(args):
     logging.basicConfig(filename='billboard.log',
                         level=logging.DEBUG)
     t0 = time.time()
-    set_appeared_hot_100 = get_hot_100_set(args.end_date,
-                                           billboard.ChartData('hot-100'))
+    appeared_hot_100 = get_hot_100_set(args.end_date,
+                                       billboard.ChartData('hot-100'))
+    set_appeared_hot_100 = set(appeared_hot_100)
     elapsed = (time.time() - t0) / 60.0
     logging.info("Processing took {:.2f} minutes for ending \
                   date {:s}.".format(elapsed, args.end_date))
