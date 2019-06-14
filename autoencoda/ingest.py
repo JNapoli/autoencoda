@@ -236,7 +236,7 @@ def main(args):
     # Option to continue.
     if args.ingest_billboard:
 
-        # Load raw Billboard 100 data.
+        # Load raw Billboard 100 data entries.
         with open(args.path_raw_dat_billboard, 'rb') as f:
             billboard_raw = pickle.load(f)
 
@@ -250,6 +250,8 @@ def main(args):
             try:
                 # Verbosity
                 logging.info('Processing {:s} by {:s}'.format(item[0], item[1]))
+
+                # Get Spotify tags.
                 bill_item = get_spotify_from_billboard(item[0],
                                                         item[1],
                                                         spotify)
@@ -267,7 +269,7 @@ def main(args):
                 path_track = os.path.join(path_tracks_billboard,
                                           URI_track + '.p')
 
-                # Only build tracks we haven't before
+                # Only build tracks we haven't built before.
                 if os.path.exists(path_track): continue
                 track_to_save = build_track(URI_track,
                                             URI_artist,
@@ -275,48 +277,60 @@ def main(args):
                                             args.path_data_mp3,
                                             billboard=True)
 
-                # Cache track
+                # Cache track.
                 with open(path_track, 'wb') as f:
                      pickle.dump(track_to_save, f, protocol=pickle.HIGHEST_PROTOCOL)
 
-                # Keep track of artists and tracks in Billboard set
+                # Keep track of artists and tracks in Billboard set.
                 URIs_billboard_tracks.append(URI_track)
                 URIs_billboard_artists.append(URI_artist)
 
+            # Sometimes connection or token exceptions happen.
             except spotipy.client.SpotifyException:
-                logging.info("Caught expired token.")
+                logging.info('Caught expired token.')
                 spotify = get_spotify_instance(args.spotify_client_id,
                                                args.spotify_client_secret)
-                logging.info("Successfully reinstantiated.")
+                logging.info('Successfully reinstantiated.')
                 continue
 
             except:
-                logging.info("Caught some error")
+                logging.info('Caught some error.')
                 spotify = get_spotify_instance(args.spotify_client_id,
                                                args.spotify_client_secret)
-                logging.info("Successfully reinstantiated.")
+                logging.info('Successfully reinstantiated.'')
                 continue
 
+        # Keep track of what URIs we have in our data set.
         with open('../data/cache/cache-URI-lists.p', 'wb') as f:
             pickle.dump((URIs_billboard_tracks, URIs_billboard_artists), f,
                         protocol=pickle.HIGHEST_PROTOCOL)
 
+    # Now get some tracks put out by the artists on Billboard that did not
+    # make it to Billboard themselves.
     if args.ingest_non_hits:
-        logging.info("Loading cached URI lists.")
+        logging.info('Loading cached URI lists.'')
+
+        # Load which URIs we have processed from Billboard.
         with open('../data/cache/cache-URI-lists.p', 'rb') as f:
             URIs = pickle.load(f)
         URIs_billboard_tracks, URIs_billboard_artists = URIs
+        # Sanity check
         assert 'track' in URIs_billboard_tracks[0]
         assert 'artist' in URIs_billboard_artists[0]
+
         artists_processed = []
         to_build = []
 
         for artist_URI in URIs_billboard_artists:
             if not artist_URI in artists_processed:
                 try:
+                    # Get top tracks for each Billboard artist.
                     top_tracks = spotify.artist_top_tracks(artist_URI)['tracks']
                     for t in top_tracks:
                         t_URI = 'spotify:track:{}'.format(t['id'])
+
+                        # Now we are only interested in getting non-billboard hits
+                        # that have mp3 previews.
                         if not t_URI in URIs_billboard_tracks and has_mp3_preview(t_URI, spotify):
                             track_to_save = build_track(t_URI,
                                                         artist_URI,
@@ -331,12 +345,14 @@ def main(args):
                             with open(path_track, 'wb') as f:
                                 pickle.dump(track_to_save, f,
                                             protocol=pickle.HIGHEST_PROTOCOL)
+
                 except spotipy.client.SpotifyException:
                     logging.info("Caught expired token.")
                     spotify = get_spotify_instance(args.spotify_client_id,
                                                    args.spotify_client_secret)
                     logging.info("Successfully reinstantiated.")
                     continue
+
                 except:
                     logging.info("Caught some error")
                     spotify = get_spotify_instance(args.spotify_client_id,
