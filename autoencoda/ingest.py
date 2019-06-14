@@ -35,17 +35,6 @@ parser.add_argument('--spotify_client_secret',
                     type=str,
                     required=True,
                     help='Required secret key to access Spotify API.')
-parser.add_argument('--path_data_set_base',
-                    type=str,
-                    required=False,
-                    default='../data/processed/',
-                    help='Base directory containing data sets as json entries, \
-                    one for each artist.')
-parser.add_argument('--continue_ingest',
-                    type=int,
-                    default=0,
-                    required=False,
-                    help='Whether this ingestion run is a continuation.')
 parser.add_argument('--ingest_billboard',
                     type=int,
                     default=0,
@@ -84,9 +73,8 @@ def get_spotify_instance(client_id, client_secret):
 
 
 def get_spotify_from_billboard(bb_track, bb_artist, spotify):
-    # Get the track
-    #time.sleep(1)
-    time.sleep(0.2)
+    """Get Spotify URIs, given a track and artist name.
+    """
     track_items = spotify.search(bb_track)['tracks']['items']
     track_URI, artist_URI = None, None
     if len(track_items) > 0:
@@ -102,72 +90,23 @@ def get_spotify_from_billboard(bb_track, bb_artist, spotify):
     return track_URI, artist_URI
 
 
-def get_tracks_with_previews(artist_id, spotify):
-    """
-    """
-    # Get all albums for specified artist.
-    albums = spotify.artist_albums(artist_id)['items']
-
-    # Properly format album IDs for Spotify API.
-    album_IDs = [
-        'spotify:album:{}'.format(elem['id']) for elem in albums
-    ]
-
-    # Figure out which tracks actually have previews.
-    # We only want those.
-    tracks_with_previews = []
-    for AID in album_IDs:
-        tracks = spotify.album_tracks(AID)['items']
-        tracks_with_previews.extend([
-            t for t in tracks if t['preview_url'] is not None
-        ])
-
-    return [
-        {
-            'track_id': 'spotify:track:{}'.format(elem['id']),
-            'artist_id': artist_id,
-            'preview_url': elem['preview_url']
-        }
-        for elem in tracks_with_previews
-    ]
-
-
 def add_spotify_audio_features(track_list, spotify):
-    """
+    """Get precomputed audio features from Spotify.
     """
     for track in track_list:
         # Get precomputed audio features.
         audio_features = spotify.audio_features(track['track_id'])[0]
-
         # Add numerical features to the data.
         for feature, value in audio_features.items():
             if not feature in track:
                 track[feature] = value
         time.sleep(1.0)
         track['popularity'] = spotify.track(track['track_id'])['popularity']
-
-    return track_list
-
-
-def fetch_mp3_files(track_list, dir_mp3s):
-    """
-    """
-    if not os.path.exists(dir_mp3s):
-        logging.info('Creating base directory for mp3s at {}.'.format(dir_mp3s))
-        os.mkdir(dir_mp3s)
-
-    for track in track_list:
-        path_mp3 = os.path.join(dir_mp3s,
-                                'track_{}.mp3'.format(track['track_id']))
-        if not os.path.exists(path_mp3):
-            wget.download(track['preview_url'], path_mp3)
-        track['path_mp3'] = path_mp3
-
     return track_list
 
 
 def compute_spectrogram(track, **kwargs_spec):
-    """
+    """Obtain a mel spectrogram from the raw track audio.
     """
     audio, sr = librosa.load(track['path_mp3'])
     sg = librosa.feature.melspectrogram(y=audio, sr=sr, **kwargs_spec)
@@ -176,37 +115,15 @@ def compute_spectrogram(track, **kwargs_spec):
     return track
 
 
-def cache_artist_data(artist_tracks, dir_base):
-    """
-    """
-    # Save data for each artist separately. Makes it easier for us to query
-    # by genre or time period.
-    assert len(artist_tracks) > 0
-    if not os.path.exists(dir_base): os.mkdir(dir_base)
-    artist_id = artist_tracks[0]['artist_id']
-    path_pickle_artist = os.path.join(dir_base,
-                                      artist_id + '.p')
-    with open(path_pickle_artist, 'wb') as f_save:
-        pickle.dump(artist_tracks,
-                    f_save,
-                    protocol=pickle.HIGHEST_PROTOCOL)
-    return None
-
-
 def has_mp3_preview(track_URI, spotify):
+    """Function to return whether the requested track has an mp3 preview available.
+    """
     return spotify.track(track_URI)['preview_url'] is not None
 
 
-def flag_billboard_entries(track_list, billboard_entry_URIs):
-    for track in track_list:
-        if track['track_id'] in billboard_entry_URIs:
-            track['billboard'] = True
-        else:
-            track['billboard'] = False
-    return track_list
-
-
 def build_track(track_URI, artist_URI, spotify, path_data_mp3, billboard=False):
+    """ Put together a dictionary containing track information.
+    """
     track = {
         'track_id': track_URI,
        'artist_id': artist_URI,
@@ -297,7 +214,7 @@ def main(args):
                 logging.info('Caught some error.')
                 spotify = get_spotify_instance(args.spotify_client_id,
                                                args.spotify_client_secret)
-                logging.info('Successfully reinstantiated.'')
+                logging.info('Successfully reinstantiated.')
                 continue
 
         # Keep track of what URIs we have in our data set.
@@ -308,7 +225,7 @@ def main(args):
     # Now get some tracks put out by the artists on Billboard that did not
     # make it to Billboard themselves.
     if args.ingest_non_hits:
-        logging.info('Loading cached URI lists.'')
+        logging.info('Loading cached URI lists.')
 
         # Load which URIs we have processed from Billboard.
         with open('../data/cache/cache-URI-lists.p', 'rb') as f:
