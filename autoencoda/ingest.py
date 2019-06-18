@@ -79,6 +79,14 @@ def compute_spectrogram(track, **kwargs_spec):
     track['zero_cross'] = librosa.feature.zero_crossing_rate(audio)
     track['rms'] = librosa.feature.rms(y=audio)
     return track
+
+
+def compute_chromogram(track):
+    """Obtain chromogram of the provided track.
+    """
+    audio, sr = librosa.load(track['path_mp3'])
+    chrom =  librosa.feature.chroma_stft(y=audio, sr=sr)
+    track['chrom'] = chrom
     return track
 
 
