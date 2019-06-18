@@ -26,6 +26,7 @@ parser.add_argument('--preprocessed',
                     default='../data/preprocessed/',
                     help='Path containing preprocessed data.')
 args = parser.parse_args()
+from librosa.display import specshow
 
 
 def read_pickle(full_path):
