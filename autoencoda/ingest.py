@@ -64,21 +64,6 @@ def get_spotify_from_billboard(bb_track, bb_artist, spotify):
     return track_URI, artist_URI
 
 
-def add_spotify_audio_features(track_list, spotify):
-    """Get precomputed audio features from Spotify.
-    """
-    for track in track_list:
-        # Get precomputed audio features.
-        audio_features = spotify.audio_features(track['track_id'])[0]
-        # Add numerical features to the data.
-        for feature, value in audio_features.items():
-            if not feature in track:
-                track[feature] = value
-        time.sleep(1.0)
-        track['popularity'] = spotify.track(track['track_id'])['popularity']
-    return track_list
-
-
 def compute_spectrogram(track, **kwargs_spec):
     """Obtain a mel spectrogram from the raw track audio.
     """
