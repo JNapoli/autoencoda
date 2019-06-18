@@ -37,7 +37,17 @@ def get_spotify_instance(client_id, client_secret):
 
 
 def get_spotify_from_billboard(bb_track, bb_artist, spotify):
-    """Get Spotify URIs, given a track and artist name.
+    """Get Spotify URIs, given a track and artist name. This function
+    searches Spotify for available URI data.
+
+    Args:
+        bb_track (str): Track name
+        bb_artist (str): Track artist
+        spotify (Spotify): Spotify instance to query
+
+    Returns:
+        URIs (tuple): Tuple whose first element is the track URI and whose second
+                      element is the artist URI. Either or both can be None.
     """
     track_items = spotify.search(bb_track)['tracks']['items']
     track_URI, artist_URI = None, None
