@@ -107,18 +107,21 @@ def has_mp3_preview(track_URI, spotify):
 def build_track(track_URI, artist_URI, spotify, path_data_mp3, billboard=False):
     """ Put together a dictionary containing track information.
     """
+    track_info_from_spotify = spotify.track(track_URI)
     track = {
         'track_id': track_URI,
        'artist_id': artist_URI,
-     'preview_url': spotify.track(track_URI)['preview_url']
+     'preview_url': track_info_from_spotify['preview_url'],
+     'popularity': track_info_from_spotify['popularity']
     }
     assert track['preview_url'] is not None
     path_mp3 = os.path.join(path_data_mp3, track_URI + '.mp3')
     # Download and save path for mp3.
     wget.download(track['preview_url'], path_mp3)
     track['path_mp3'] = path_mp3
-    track = compute_spectrogram(track)
     track['billboard'] = billboard
+    track = compute_spectrogram(track)
+    track = compute_chromogram(track)
     return track
 
 
