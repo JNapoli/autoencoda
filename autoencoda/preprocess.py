@@ -43,6 +43,7 @@ def main(args):
     # Set verbosity level for debugging.
     logging.basicConfig(filename='preprocess.log',
                         level=logging.DEBUG)
+    logging.basicConfig(filename='preprocess.log', level=logging.DEBUG)
     # Load raw data.
     tracks_billboard = get_tracks_in_directory(args.tracks_billboard)
     tracks_not_billboard = get_tracks_in_directory(args.tracks_not_billboard)
