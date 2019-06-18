@@ -92,6 +92,14 @@ def compute_chromogram(track):
 
 def has_mp3_preview(track_URI, spotify):
     """Function to return whether the requested track has an mp3 preview available.
+
+    Args:
+        track_URI (str): Track URI for searching Spotify
+        spotify (Spotify): Spotify instance to query
+
+    Returns:
+        (bool): Boolean whose value indicates whether an mp3 preview is
+                available for the track on Spotify
     """
     return spotify.track(track_URI)['preview_url'] is not None
 
