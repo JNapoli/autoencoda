@@ -20,6 +20,7 @@ def get_tracks_in_directory(path_dir):
     dir_contents = os.listdir(path_dir)
     # Make sure directory contains only pickled tracks.
     assert [elem[-2:] == '.p' for elem in dir_contents]
+    assert all([elem[-2:] == '.p' for elem in dir_contents])
     for fn in dir_contents:
         path_full = os.path.join(path_dir, fn)
         tracks.append(read_pickle(path_full))
