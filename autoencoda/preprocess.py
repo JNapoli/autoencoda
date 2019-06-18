@@ -62,6 +62,7 @@ def main(args):
     logging.info("Preprocessed {:d} Billboard tracks and {:d} \
                  non-Billboard tracks.".format(spectra_billboard.shape[0],
                                                spectra_not_billboard.shape[1]))
+                                               spectra_not_billboard.shape[0]))
 
 
 if __name__ == '__main__':
