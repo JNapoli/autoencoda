@@ -30,6 +30,7 @@ def get_tracks_in_directory(path_dir):
 def normalize_spectra(spectra):
     assert all([elem.size == spectra[0].size for elem in spectra])
     # Normalize spectra to unit alrea
+    # Normalize spectra to unit area
     spectra = np.array(spectra)
     spectra = spectra / np.trapz(spectra, axis=1)[:, np.newaxis]
     assert np.trapz(spectra, axis=1).all()
