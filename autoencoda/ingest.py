@@ -114,7 +114,7 @@ def build_track(track_URI, artist_URI, spotify, path_data_mp3, billboard=False):
      'preview_url': track_info_from_spotify['preview_url'],
      'popularity': track_info_from_spotify['popularity']
     }
-    assert track['preview_url'] is not None
+    assert track['preview_url'] is not None, 'Track preview did not exist.'
     path_mp3 = os.path.join(path_data_mp3, track_URI + '.mp3')
     # Download and save path for mp3.
     wget.download(track['preview_url'], path_mp3)
@@ -168,7 +168,8 @@ def main(args):
 
                 # Build track
                 path_tracks_billboard = '../data/cache_tracks_billboard/'
-                assert os.path.exists(path_tracks_billboard)
+                assert os.path.exists(path_tracks_billboard), 'Where are the \
+                       Billboard tracks.'
                 path_track = os.path.join(path_tracks_billboard,
                                           URI_track + '.p')
 
@@ -218,8 +219,10 @@ def main(args):
             URIs = pickle.load(f)
         URIs_billboard_tracks, URIs_billboard_artists = URIs
         # Sanity check
-        assert 'track' in URIs_billboard_tracks[0]
-        assert 'artist' in URIs_billboard_artists[0]
+        assert 'track' in URIs_billboard_tracks[0], "'Track' should be in the \
+               track URIs!"
+        assert 'artist' in URIs_billboard_artists[0], "'Artist' should be in the \
+               track URIs!"
 
         artists_processed = []
         to_build = []
@@ -241,7 +244,8 @@ def main(args):
                                                         args.path_data_mp3,
                                                         billboard=False)
                             path_tracks_not_billboard = '../data/cache_tracks_not_billboard/'
-                            assert os.path.exists(path_tracks_not_billboard)
+                            assert os.path.exists(path_tracks_not_billboard), 'Where \
+                                   do the not-Billboard tracks live?'
                             path_track = os.path.join(path_tracks_not_billboard,
                                                       t_URI + '.p')
                             # Cache track
