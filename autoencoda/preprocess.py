@@ -7,25 +7,6 @@ import pickle
 import matplotlib.pyplot as plt
 import numpy as np
 
-parser = argparse.ArgumentParser(
-    description='Preprocess the data for my model.'
-)
-parser.add_argument('--tracks_billboard',
-                    type=str,
-                    required=False,
-                    default='../data/cache_tracks_billboard/',
-                    help='Path containing tracks that appeared on Billboard.')
-parser.add_argument('--tracks_not_billboard',
-                    type=str,
-                    required=False,
-                    default='../data/cache_tracks_not_billboard/',
-                    help='Path containing tracks that did not appear on Billboard.')
-parser.add_argument('--preprocessed',
-                    type=str,
-                    required=False,
-                    default='../data/preprocessed/',
-                    help='Path containing preprocessed data.')
-args = parser.parse_args()
 from librosa.display import specshow
 
 
@@ -81,4 +62,35 @@ def main(args):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        description='Preprocess and store the data for my model.'
+    )
+    parser.add_argument('--tracks_billboard',
+                        type=str,
+                        required=False,
+                        default='../data/cache_tracks_billboard/',
+                        help='Path containing tracks that appeared on Billboard.')
+    parser.add_argument('--tracks_not_billboard',
+                        type=str,
+                        required=False,
+                        default='../data/cache_tracks_not_billboard/',
+                        help='Path containing tracks that did not appear on Billboard.')
+    parser.add_argument('--images_billboard',
+                        type=str,
+                        required=False,
+                        default='../data/preprocessed_images/billboard/',
+                        help='Path containing spectrogram images of the Billboard \
+                        tracks.')
+    parser.add_argument('--images_not_billboard',
+                        type=str,
+                        required=False,
+                        default='../data/preprocessed_images/not_billboard/',
+                        help='Path containing spectrogram images of tracks that \
+                        are not in Billboard set.')
+    parser.add_argument('--preprocessed',
+                        type=str,
+                        required=False,
+                        default='../data/preprocessed/',
+                        help='Path containing preprocessed data.')
+    args = parser.parse_args()
     main(args)
