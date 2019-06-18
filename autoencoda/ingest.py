@@ -13,42 +13,6 @@ import numpy as np
 import spotipy.util as su
 
 
-parser = argparse.ArgumentParser(
-    description='Use Spotify API to assemble dataset.'
-)
-parser.add_argument('--path_raw_dat_billboard',
-                    type=str,
-                    required=False,
-                    default='../data/raw/billboard-scrape.p',
-                    help='Path to file containing Billboard scrape result.')
-parser.add_argument('--path_data_mp3',
-                    type=str,
-                    required=False,
-                    default='../data/data_mp3/',
-                    help='Directory in which to store mp3 files and other track \
-                    data.')
-parser.add_argument('--spotify_client_id',
-                    type=str,
-                    required=True,
-                    help='Required credential to access Spotify API.')
-parser.add_argument('--spotify_client_secret',
-                    type=str,
-                    required=True,
-                    help='Required secret key to access Spotify API.')
-parser.add_argument('--ingest_billboard',
-                    type=int,
-                    default=0,
-                    required=False,
-                    help='Whether to ingest Billboard hot 100 entries.')
-parser.add_argument('--ingest_non_hits',
-                    type=int,
-                    default=0,
-                    required=False,
-                    help='Whether to ingest songs that did not appear on \
-                         billboard.')
-args = parser.parse_args()
-
-
 def get_spotify_instance(client_id, client_secret):
     """Get a Spotify instance that can pull information from the Spotify API.
 
@@ -278,4 +242,38 @@ def main(args):
                     continue
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        description='Use Spotify API to assemble dataset.'
+    )
+    parser.add_argument('--path_raw_dat_billboard',
+                        type=str,
+                        required=False,
+                        default='../data/raw/billboard-scrape.p',
+                        help='Path to file containing Billboard scrape result.')
+    parser.add_argument('--path_data_mp3',
+                        type=str,
+                        required=False,
+                        default='../data/data_mp3/',
+                        help='Directory in which to store mp3 files and other track \
+                        data.')
+    parser.add_argument('--spotify_client_id',
+                        type=str,
+                        required=True,
+                        help='Required credential to access Spotify API.')
+    parser.add_argument('--spotify_client_secret',
+                        type=str,
+                        required=True,
+                        help='Required secret key to access Spotify API.')
+    parser.add_argument('--ingest_billboard',
+                        type=int,
+                        default=0,
+                        required=False,
+                        help='Whether to ingest Billboard hot 100 entries.')
+    parser.add_argument('--ingest_non_hits',
+                        type=int,
+                        default=0,
+                        required=False,
+                        help='Whether to ingest songs that did not appear on \
+                             billboard.')
+    args = parser.parse_args()
     main(args)
