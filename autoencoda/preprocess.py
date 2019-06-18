@@ -1,8 +1,10 @@
 import argparse
+import librosa
 import logging
 import os
 import pickle
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 parser = argparse.ArgumentParser(
