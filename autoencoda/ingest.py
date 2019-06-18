@@ -71,6 +71,14 @@ def compute_spectrogram(track, **kwargs_spec):
     sg = librosa.feature.melspectrogram(y=audio, sr=sr, **kwargs_spec)
     track['spectrogram'] = sg
     track['sr'] = sr
+    track['centroid'] = librosa.feature.spectral_centroid(y=audio, sr=sr)
+    track['bandwidth'] = librosa.feature.spectral_bandwidth(y=audio, sr=sr)
+    track['flatness'] = librosa.feature.spectral_flatness(y=audio)
+    track['rolloff'] = librosa.feature.spectral_rolloff(y=audio, sr=sr, roll_percent=0.80)
+    track['tonnetz'] = librosa.feature.tonnetz(y=librosa.effects.harmonic(audio), sr=sr)
+    track['zero_cross'] = librosa.feature.zero_crossing_rate(audio)
+    track['rms'] = librosa.feature.rms(y=audio)
+    return track
     return track
 
 
