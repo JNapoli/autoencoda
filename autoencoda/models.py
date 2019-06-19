@@ -3,12 +3,33 @@ import logging
 import sys
 
 import numpy as np
+import tensorflow.keras as k
 
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Activation, BatchNormalization, \
                                     Dense, Dropout,
+                                    Dense, Dropout, LSTM
 from tensorflow.keras.callbacks import TensorBoard
+
+
+def LSTM_keras(X_trn, Y_trn,
+               optimizer=k.optimizers.Adam(lr=0.001),
+               list_metrics=['accuracy']):
+    """Baseline LSTM model for spectrogram classification.
+    """
+    # Data set dimensions
+    _, timesteps, data_dim = X_trn.shape
+
+    # Expected input data shape: (batch_size, timesteps, data_dim)
+    model = Sequential()
+    model.add(LSTM(100, return_sequences=True))
+    model.add(LSTM(60))
+    model.add(Dense(1, activation='sigmoid'))
+    model.compile(loss='accuracy',
+                  optimizer=optimizer,
+                  metrics=list_metrics)
+    return model
 
 
 def deep_logistic_keras(X_trn, Y_trn,
