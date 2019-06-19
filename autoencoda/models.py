@@ -8,7 +8,6 @@ import tensorflow.keras as k
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Activation, BatchNormalization, \
-                                    Dense, Dropout,
                                     Dense, Dropout, LSTM
 from tensorflow.keras.callbacks import TensorBoard
 
