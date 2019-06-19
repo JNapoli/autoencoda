@@ -13,42 +13,6 @@ import numpy as np
 import spotipy.util as su
 
 
-parser = argparse.ArgumentParser(
-    description='Use Spotify API to assemble dataset.'
-)
-parser.add_argument('--path_raw_dat_billboard',
-                    type=str,
-                    required=False,
-                    default='../data/raw/billboard-scrape.p',
-                    help='Path to file containing Billboard scrape result.')
-parser.add_argument('--path_data_mp3',
-                    type=str,
-                    required=False,
-                    default='../data/data_mp3/',
-                    help='Directory in which to store mp3 files and other track \
-                    data.')
-parser.add_argument('--spotify_client_id',
-                    type=str,
-                    required=True,
-                    help='Required credential to access Spotify API.')
-parser.add_argument('--spotify_client_secret',
-                    type=str,
-                    required=True,
-                    help='Required secret key to access Spotify API.')
-parser.add_argument('--ingest_billboard',
-                    type=int,
-                    default=0,
-                    required=False,
-                    help='Whether to ingest Billboard hot 100 entries.')
-parser.add_argument('--ingest_non_hits',
-                    type=int,
-                    default=0,
-                    required=False,
-                    help='Whether to ingest songs that did not appear on \
-                         billboard.')
-args = parser.parse_args()
-
-
 def get_spotify_instance(client_id, client_secret):
     """Get a Spotify instance that can pull information from the Spotify API.
 
@@ -73,7 +37,17 @@ def get_spotify_instance(client_id, client_secret):
 
 
 def get_spotify_from_billboard(bb_track, bb_artist, spotify):
-    """Get Spotify URIs, given a track and artist name.
+    """Get Spotify URIs, given a track and artist name. This function
+    searches Spotify for available URI data.
+
+    Args:
+        bb_track (str): Track name
+        bb_artist (str): Track artist
+        spotify (Spotify): Spotify instance to query
+
+    Returns:
+        URIs (tuple): Tuple whose first element is the track URI and whose second
+                      element is the artist URI. Either or both can be None.
     """
     track_items = spotify.search(bb_track)['tracks']['items']
     track_URI, artist_URI = None, None
@@ -90,21 +64,6 @@ def get_spotify_from_billboard(bb_track, bb_artist, spotify):
     return track_URI, artist_URI
 
 
-def add_spotify_audio_features(track_list, spotify):
-    """Get precomputed audio features from Spotify.
-    """
-    for track in track_list:
-        # Get precomputed audio features.
-        audio_features = spotify.audio_features(track['track_id'])[0]
-        # Add numerical features to the data.
-        for feature, value in audio_features.items():
-            if not feature in track:
-                track[feature] = value
-        time.sleep(1.0)
-        track['popularity'] = spotify.track(track['track_id'])['popularity']
-    return track_list
-
-
 def compute_spectrogram(track, **kwargs_spec):
     """Obtain a mel spectrogram from the raw track audio.
     """
@@ -112,11 +71,35 @@ def compute_spectrogram(track, **kwargs_spec):
     sg = librosa.feature.melspectrogram(y=audio, sr=sr, **kwargs_spec)
     track['spectrogram'] = sg
     track['sr'] = sr
+    track['centroid'] = librosa.feature.spectral_centroid(y=audio, sr=sr)
+    track['bandwidth'] = librosa.feature.spectral_bandwidth(y=audio, sr=sr)
+    track['flatness'] = librosa.feature.spectral_flatness(y=audio)
+    track['rolloff'] = librosa.feature.spectral_rolloff(y=audio, sr=sr, roll_percent=0.80)
+    track['tonnetz'] = librosa.feature.tonnetz(y=librosa.effects.harmonic(audio), sr=sr)
+    track['zero_cross'] = librosa.feature.zero_crossing_rate(audio)
+    track['rms'] = librosa.feature.rms(y=audio)
+    return track
+
+
+def compute_chromogram(track):
+    """Obtain chromogram of the provided track.
+    """
+    audio, sr = librosa.load(track['path_mp3'])
+    chrom =  librosa.feature.chroma_stft(y=audio, sr=sr)
+    track['chrom'] = chrom
     return track
 
 
 def has_mp3_preview(track_URI, spotify):
     """Function to return whether the requested track has an mp3 preview available.
+
+    Args:
+        track_URI (str): Track URI for searching Spotify
+        spotify (Spotify): Spotify instance to query
+
+    Returns:
+        (bool): Boolean whose value indicates whether an mp3 preview is
+                available for the track on Spotify
     """
     return spotify.track(track_URI)['preview_url'] is not None
 
@@ -124,18 +107,21 @@ def has_mp3_preview(track_URI, spotify):
 def build_track(track_URI, artist_URI, spotify, path_data_mp3, billboard=False):
     """ Put together a dictionary containing track information.
     """
+    track_info_from_spotify = spotify.track(track_URI)
     track = {
         'track_id': track_URI,
        'artist_id': artist_URI,
-     'preview_url': spotify.track(track_URI)['preview_url']
+     'preview_url': track_info_from_spotify['preview_url'],
+     'popularity': track_info_from_spotify['popularity']
     }
-    assert track['preview_url'] is not None
+    assert track['preview_url'] is not None, 'Track preview did not exist.'
     path_mp3 = os.path.join(path_data_mp3, track_URI + '.mp3')
     # Download and save path for mp3.
     wget.download(track['preview_url'], path_mp3)
     track['path_mp3'] = path_mp3
-    track = compute_spectrogram(track)
     track['billboard'] = billboard
+    track = compute_spectrogram(track)
+    track = compute_chromogram(track)
     return track
 
 
@@ -182,7 +168,8 @@ def main(args):
 
                 # Build track
                 path_tracks_billboard = '../data/cache_tracks_billboard/'
-                assert os.path.exists(path_tracks_billboard)
+                assert os.path.exists(path_tracks_billboard), 'Where are the \
+                       Billboard tracks.'
                 path_track = os.path.join(path_tracks_billboard,
                                           URI_track + '.p')
 
@@ -232,8 +219,10 @@ def main(args):
             URIs = pickle.load(f)
         URIs_billboard_tracks, URIs_billboard_artists = URIs
         # Sanity check
-        assert 'track' in URIs_billboard_tracks[0]
-        assert 'artist' in URIs_billboard_artists[0]
+        assert 'track' in URIs_billboard_tracks[0], "'Track' should be in the \
+               track URIs!"
+        assert 'artist' in URIs_billboard_artists[0], "'Artist' should be in the \
+               track URIs!"
 
         artists_processed = []
         to_build = []
@@ -255,7 +244,8 @@ def main(args):
                                                         args.path_data_mp3,
                                                         billboard=False)
                             path_tracks_not_billboard = '../data/cache_tracks_not_billboard/'
-                            assert os.path.exists(path_tracks_not_billboard)
+                            assert os.path.exists(path_tracks_not_billboard), 'Where \
+                                   do the not-Billboard tracks live?'
                             path_track = os.path.join(path_tracks_not_billboard,
                                                       t_URI + '.p')
                             # Cache track
@@ -278,4 +268,38 @@ def main(args):
                     continue
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        description='Use Spotify API to assemble dataset.'
+    )
+    parser.add_argument('--path_raw_dat_billboard',
+                        type=str,
+                        required=False,
+                        default='../data/raw/billboard-scrape.p',
+                        help='Path to file containing Billboard scrape result.')
+    parser.add_argument('--path_data_mp3',
+                        type=str,
+                        required=False,
+                        default='../data/data_mp3/',
+                        help='Directory in which to store mp3 files and other track \
+                        data.')
+    parser.add_argument('--spotify_client_id',
+                        type=str,
+                        required=True,
+                        help='Required credential to access Spotify API.')
+    parser.add_argument('--spotify_client_secret',
+                        type=str,
+                        required=True,
+                        help='Required secret key to access Spotify API.')
+    parser.add_argument('--ingest_billboard',
+                        type=int,
+                        default=0,
+                        required=False,
+                        help='Whether to ingest Billboard hot 100 entries.')
+    parser.add_argument('--ingest_non_hits',
+                        type=int,
+                        default=0,
+                        required=False,
+                        help='Whether to ingest songs that did not appear on \
+                             billboard.')
+    args = parser.parse_args()
     main(args)

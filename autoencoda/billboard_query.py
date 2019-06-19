@@ -6,23 +6,6 @@ import requests
 import time
 
 
-parser = argparse.ArgumentParser(
-    description='Use Billboard python package to get tracks that appear on \
-                 the Hot 100 list for a specific date range.'
-)
-parser.add_argument('--end_date',
-                    type=str,
-                    required=False,
-                    default='2019-01-01',
-                    help='Date format: YYYY-MM-DD')
-parser.add_argument('--path_save',
-                    type=str,
-                    required=False,
-                    default='../data/raw/billboard-scrape.p',
-                    help='File path for saving Hot 100 set.')
-args = parser.parse_args()
-
-
 def get_hot_100_set(stop_date, chart):
     """
     """
@@ -56,4 +39,19 @@ def main(args):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        description='Use Billboard python package to get tracks that appear on \
+                     the Hot 100 list for a specific date range.'
+    )
+    parser.add_argument('--end_date',
+                        type=str,
+                        required=False,
+                        default='2019-01-01',
+                        help='Date format: YYYY-MM-DD')
+    parser.add_argument('--path_save',
+                        type=str,
+                        required=False,
+                        default='../data/raw/billboard-scrape.p',
+                        help='File path for saving Hot 100 set.')
+    args = parser.parse_args()
     main(args)
