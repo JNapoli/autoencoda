@@ -91,9 +91,9 @@ def deep_logistic_keras(X_trn, Y_trn,
     return model
 
 
-def logistic_regression_keras(X_trn, Y_trn,
+def logistic_regression_keras(X, Y,
                               loss_type='binary_crossentropy',
-                              opt_type='Adam',
+                              optimizer=k.optimizers.Adam(lr=0.01),
                               list_metrics=['accuracy'],
                               print_summary=False,
                               **kwargs):
@@ -101,11 +101,12 @@ def logistic_regression_keras(X_trn, Y_trn,
     """
     # Initialize model
     model = Sequential()
-    model.add(Dense(1, activation='sigmoid'))
+    model.add(Dense(1, input_dim=X.shape[1], activation='sigmoid'))
     # Compile and fit
     model.compile(loss=loss_type,
-                  optimizer=opt_type,
+                  optimizer=optimizer,
                   metrics=list_metrics)
+    # For debugging
     if print_summary:
         print('Logistic regression model summary:')
         print(model.summary())
