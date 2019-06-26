@@ -6,8 +6,7 @@ import numpy as np
 import tensorflow.keras as k
 
 from sklearn.metrics import classification_report
-from sklearn.model_selection import StratifiedKFold, StratifiedShuffleSplit, \
-                                    train_test_split
+from sklearn.model_selection import StratifiedKFold, StratifiedShuffleSplit
 from sklearn.svm import SVC
 from tensorflow.keras.callbacks import ModelCheckpoint, TensorBoard
 from tensorflow.keras.layers import Activation, BatchNormalization, \
