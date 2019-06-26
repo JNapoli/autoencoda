@@ -60,7 +60,8 @@ def deep_logistic_keras(X,
                         metrics_list=['accuracy'],
                         do_batch_norm=True,
                         do_dropout=None,
-                        activation_type='relu'):
+                        activation_type='relu',
+                        initializer=k.initializers.RandomNormal(mean=0.0, stddev=0.05)):
     """Build a deep NN classifier in Keras.
 
     Args:
@@ -75,6 +76,7 @@ def deep_logistic_keras(X,
         do_dropout (float/None): Dropout fraction to use.
         activation_type (str): Type of activation function to apply to hidden
                                layer outputs.
+        initializer (Keras initializer): Keras initializer to use for dense layers.
 
     Returns:
         model (Keras model): Compiled Keras model.
@@ -88,12 +90,16 @@ def deep_logistic_keras(X,
         last_layer = ilayer == (N_layers - 1)
         # Handles each kind of layer (input, output, hidden) appropriately
         if ilayer == 0:
-            model.add(Dense(nodes, input_dim=X.shape[1]))
+            model.add(Dense(nodes,
+                            input_dim=X.shape[1],
+                            kernel_initializer=initializer))
         elif ilayer == N_layers - 1:
             assert nodes == 1, 'Output layer should have 1 node.'
-            model.add(Dense(nodes, activation='sigmoid'))
+            model.add(Dense(nodes,
+                            activation='sigmoid',
+                            kernel_initializer=initializer))
         else:
-            model.add(Dense(nodes))
+            model.add(Dense(nodes, kernel_initializer=initializer))
         # Optional batch norm and dropout
         if not last_layer:
             if do_dropout is not None:
