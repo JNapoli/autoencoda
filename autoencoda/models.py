@@ -5,11 +5,14 @@ import sys
 import numpy as np
 import tensorflow.keras as k
 
-from sklearn.model_selection import train_test_split
-from tensorflow.keras.models import Sequential
+from sklearn.metrics import classification_report
+from sklearn.model_selection import StratifiedKFold, StratifiedShuffleSplit, \
+                                    train_test_split
+from sklearn.svm import SVC
+from tensorflow.keras.callbacks import ModelCheckpoint, TensorBoard
 from tensorflow.keras.layers import Activation, BatchNormalization, \
                                     Dense, Dropout, LSTM
-from tensorflow.keras.callbacks import TensorBoard
+from tensorflow.keras.models import Sequential
 
 
 def LSTM_keras(X_trn, Y_trn,
