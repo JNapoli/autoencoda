@@ -152,6 +152,27 @@ def kfold_wrap_scikit(X, Y, model, args, k=10, batch=300, seed=1234):
     return np.array(cv_scores)
 
 
+def load_data(path_bb_data, path_not_bb_data):
+    X_1 = np.load(path_bb_data)
+    X_0 = np.load(path_not_bb_data)
+    X = np.concatenate((X_1, X_0))
+    assert X.shape[0] == (X_1.shape[0] + X_0.shape[0]), \
+           'Concatenate is not doing the right thing.'
+    Y = np.hstack((np.ones(X_1.shape[0]),
+                   np.zeros(X_0.shape[0])))
+    assert X.shape[0] == Y.size, \
+           'Train and test sets should have same # of elements.'
+    return X, Y
+
+
+def log_data_summary(X, Y):
+    N_total = Y.size
+    N_1 = Y.sum()
+    N_0 = N_total - N_1
+    logging.info("{:d} total examples. {:.1f} % of training set is 1.".format(
+        N_total, 100 * float(N_1) / float(N_total)
+    ))
+    return None
 def main(args):
     np.random.seed(args.seed)
     # Load data
