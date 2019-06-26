@@ -117,25 +117,31 @@ def deep_logistic_keras(X,
     return model
 
 
-def logistic_regression_keras(X, Y,
+def logistic_regression_keras(X,
                               loss_type='binary_crossentropy',
-                              optimizer=k.optimizers.Adam(lr=0.01),
-                              list_metrics=['accuracy'],
-                              print_summary=False,
-                              **kwargs):
-    """Logistic regression baseline model
+                              optimizer=k.optimizers.Adam(lr=0.001),
+                              metrics_list=['accuracy'],
+                              initializer=k.initializers.RandomNormal(mean=0.0, stddev=0.05)):
+    """Logistic regression model built in Keras.
+
+    Args:
+        X (np.ndarray): Training data with shape [n_samples, n_features].
+        loss_type (str): The loss function to minimize.
+        optmizer (Keras optimizer): Keras optimizer with which to compile model.
+        metrics_list (list of str): Metrics to calculate during training.
+        initializer (Keras initializer): Keras initializer to use for dense layers.
+
+    Returns:
     """
-    # Initialize model
+    # Build and compile model
     model = Sequential()
-    model.add(Dense(1, input_dim=X.shape[1], activation='sigmoid'))
-    # Compile and fit
+    model.add(Dense(1,
+                    input_dim=X.shape[1],
+                    kernel_initializer=initializer,
+                    activation='sigmoid'))
     model.compile(loss=loss_type,
                   optimizer=optimizer,
-                  metrics=list_metrics)
-    # For debugging
-    if print_summary:
-        print('Logistic regression model summary:')
-        print(model.summary())
+                  metrics=metrics_list)
     return model
 
 
