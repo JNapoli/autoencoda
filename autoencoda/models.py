@@ -75,49 +75,39 @@ def deep_logistic_keras(X,
         do_dropout (float/None): Dropout fraction to use.
         activation_type (str): Type of activation function to apply to hidden
                                layer outputs.
-        
+
     Returns:
         model (Keras model): Compiled Keras model.
     """
     # Initialize model
     model = Sequential()
-
-    # Construct model layers
     N_layers = len(nodes_per_layer)
 
-    # Construct all laters
     for ilayer in range(N_layers):
         nodes = nodes_per_layer[ilayer]
         last_layer = ilayer == (N_layers - 1)
-
         # Handles each kind of layer (input, output, hidden) appropriately
         if ilayer == 0:
-            model.add(Dense(nodes, input_dim=X_trn.shape[1]))
+            model.add(Dense(nodes, input_dim=X.shape[1]))
         elif ilayer == N_layers - 1:
             assert nodes == 1, 'Output layer should have 1 node.'
             model.add(Dense(nodes, activation='sigmoid'))
         else:
             model.add(Dense(nodes))
-
         # Optional batch norm and dropout
         if not last_layer:
             if do_dropout is not None:
                 assert do_dropout < 1.0 and do_dropout >= 0.0, \
                        'Dropout must be fraction between 0.0 and 1.0.'
                 model.add(Dropout(do_dropout))
-
-            # Optional batch norm
             if do_batch_norm:
                 model.add(BatchNormalization())
-
             # Add activation Function
             model.add(Activation(activation_type))
-
     # Compile
     model.compile(loss=loss_type,
                   optimizer=optimizer,
                   metrics=metrics_list)
-
     return model
 
 
