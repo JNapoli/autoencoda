@@ -15,20 +15,25 @@ from tensorflow.keras.layers import Activation, BatchNormalization, \
 from tensorflow.keras.models import Sequential
 
 
-def LSTM_keras(X_trn, Y_trn,
-               optimizer=k.optimizers.Adam(lr=0.001),
+def LSTM_keras(X, Y,
+               loss_type='binary_crossentropy',
+               N=32,
+               optimizer=k.optimizers.Adam(lr=0.01),
+               do_dropout=None,
                list_metrics=['accuracy']):
     """Baseline LSTM model for spectrogram classification.
     """
     # Data set dimensions
-    _, timesteps, data_dim = X_trn.shape
+    _, n_timesteps, n_features = X.shape
 
     # Expected input data shape: (batch_size, timesteps, data_dim)
     model = Sequential()
-    model.add(LSTM(100, return_sequences=True))
-    model.add(LSTM(60))
+    model.add(LSTM(N, input_shape=(n_timesteps, n_features), return_sequences=True))
+    model.add(LSTM(N))
+    if do_dropout is not None:
+        model.add(Dropout(do_dropout))
     model.add(Dense(1, activation='sigmoid'))
-    model.compile(loss='accuracy',
+    model.compile(loss=loss_type,
                   optimizer=optimizer,
                   metrics=list_metrics)
     return model
