@@ -113,11 +113,43 @@ def logistic_regression_keras(X, Y,
     return model
 
 
-def keras_fit_model_wrapper(X_trn, Y_trn, model, **kwargs):
-    """Wrapper function that calls fit() and passes kwargs.
-    """
-    history = model.fit(X_trn, Y_trn, **kwargs)
-    return model
+def kfold_wrap(X, Y, model, args,
+               k=10,
+               batch=300,
+               verbose=True,
+               seed=1234,
+               val_split=0.2):
+    cv_scores = []
+    kfold = StratifiedKFold(n_splits=k, shuffle=True, random_state=seed)
+
+    for trn, tst in kfold.split(X, Y):
+        model.fit(X[trn], Y[trn],
+                  validation_data=[X[tst], Y[tst]],
+                  epochs=args.epochs,
+                  batch_size=batch,
+                  verbose=1,
+                  callbacks=[TensorBoard(log_dir=args.tensor_board)]
+        )
+        model.save(args.path_save_model + 'model-latest.h5')
+        scores_tst = model.evaluate(X[tst], Y[tst], verbose=0)
+        scores_trn = model.evaluate(X[trn], Y[trn], verbose=0)
+        assert model.metrics_names[1] == 'acc'
+        cv_scores.append([scores_trn[1]*100, scores_tst[1]*100])
+        logging.info('Trn acc: {:.2f}, Tst acc {:.2f}\n\n'.format(
+            result[:,0].mean(), result[:,0].std(),
+            result[:,1].mean(), result[:,1].std()
+        ))
+    return np.array(cv_scores)
+
+
+def kfold_wrap_scikit(X, Y, model, args, k=10, batch=300, seed=1234):
+    cv_scores = []
+    kfold = StratifiedKFold(n_splits=k, shuffle=True, random_state=seed)
+    for trn, tst in kfold.split(X, Y):
+        model.fit(X[trn], Y[trn])
+        cv_scores.append([model.score(X[trn], Y[trn]),
+                          model.score(X[tst], Y[tst])])
+    return np.array(cv_scores)
 
 
 def main(args):
