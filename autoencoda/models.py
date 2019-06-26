@@ -19,8 +19,21 @@ def LSTM_keras(X, Y,
                N=32,
                optimizer=k.optimizers.Adam(lr=0.01),
                do_dropout=None,
-               list_metrics=['accuracy']):
-    """Baseline LSTM model for spectrogram classification.
+               metrics_list=['accuracy']):
+    """Build an LSTM model in Keras.
+
+    Args:
+        X (np.ndarray): Array with shape [n_examples, n_timesteps, n_features]
+                        containing data examples.
+        Y (np.ndarray): Array with size [n_examples].
+        loss_type (str): The loss function to minimize.
+        N (int): Number of units for LSTM.
+        optmizer (Keras optimizer): Keras optimizer with which to compile model.
+        do_dropout (float/None): Dropout fraction to use.
+        metrics_list (list of str): Metrics to calculate during training.
+
+    Returns:
+        model (Keras model): Compiled Keras model.
     """
     # Data set dimensions
     _, n_timesteps, n_features = X.shape
@@ -30,11 +43,13 @@ def LSTM_keras(X, Y,
     model.add(LSTM(N, input_shape=(n_timesteps, n_features), return_sequences=True))
     model.add(LSTM(N))
     if do_dropout is not None:
+        if not (do_dropout >= 0.0 and do_dropout < 1.0):
+            raise ValueError('Dropout fraction specification is not correct.')
         model.add(Dropout(do_dropout))
     model.add(Dense(1, activation='sigmoid'))
     model.compile(loss=loss_type,
                   optimizer=optimizer,
-                  metrics=list_metrics)
+                  metrics=metrics_list)
     return model
 
 
