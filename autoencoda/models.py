@@ -173,47 +173,164 @@ def log_data_summary(X, Y):
         N_total, 100 * float(N_1) / float(N_total)
     ))
     return None
-def main(args):
-    np.random.seed(args.seed)
-    # Load data
-    X_1 = np.load('../data/preprocessed/preprocessed-billboard.npy')
-    np.random.shuffle(X_1)
-    Y_1 = np.ones(X_1.shape[0])
-    N_samples_max = X_1.shape[0]
-    X_0 = np.load('../data/preprocessed/preprocessed-not-billboard.npy')
-    Y_0 = np.zeros(X_0.shape[0])
-    np.random.shuffle(X_0)
-    X = np.vstack((X_1, X_0))
-    Y = np.hstack((Y_1, Y_0)).astype(int)
-    assert Y.size == X.shape[0], 'Train and test sets should have same # of elements.'
 
-    # Get train and test sets
-    X_trn, X_tst, Y_trn, Y_tst = train_test_split(X, Y,
-                                                  train_size=args.train_test_split,
-                                                  random_state=args.seed)
-    logging.info('Training on {:d} samples, validate on {:d} samples.'.format(
-                 X_trn.shape[0], X_tst.shape[0]
-    ))
-    # Train classifier
-    model = deep_logistic_keras(X_trn, Y_trn,
-                                nodes_per_layer=[50, 20, 10, 1],
-                                do_dropout=args.fraction_dropout)
-    model = keras_fit_model_wrapper(X_trn, Y_trn, model,
-                                    validation_data=[X_tst, Y_tst],
-                                    epochs=args.epochs,
-                                    batch_size=100,
-                                    verbose=True,
-                                    callbacks=[TensorBoard(log_dir=args.tensor_board)])
+
+def main(args):
+    logging.basicConfig(filename='models.log', level=logging.DEBUG)
+    np.random.seed(args.seed)
+
+    # Get data
+    X, Y = load_data(args.path_bb_data, args.path_not_bb_data)
+    split = StratifiedShuffleSplit(n_splits=1,
+                                   test_size=1-args.fraction_train,
+                                   random_state=args.seed)
+    splits = [(trn, tst) for trn, tst in split.split(X, Y)]
+    trn, tst = splits[0][0], splits[0][1]
+
+    # Print summary of data
+    log_data_summary(X, Y)
+
+    # Test models
+    if args.do_logistic:
+        model = logistic_regression_keras(X, Y)
+        history = model.fit(X[trn], Y[trn],
+                  epochs=args.epochs,
+                  validation_data=[X[tst], Y[tst]],
+                  batch_size=300,
+                  verbose=1,
+                  callbacks=[TensorBoard(log_dir=args.tensor_board)]
+        )
+        model.save(args.path_save_model + 'model-logistic.h5')
+        y_pred = model.predict_classes(X[tst]).flatten()
+        train_acc = history.history['acc']
+        val_acc = history.history['val_acc']
+        np.save(args.path_save_model + 'train_acc_logistic.npy', train_acc)
+        np.save(args.path_save_model + 'val_acc_logistic.npy', val_acc)
+        print('Logistic regression classification report:')
+        print(classification_report(Y[tst], y_pred))
+        logging.info('Saved model to disk.')
+        np.save(args.path_save_model + 'logistic-Y-for-ROC.npy', Y[tst])
+        np.save(args.path_save_model + 'logistic-Y-pred-for-ROC.npy',
+                model.predict(X[tst]).flatten())
+    if args.do_SVM:
+        for c in [0.01, 0.1, 1.0, 10.0]:
+            model = SVC(C=c, verbose=True)
+            result = kfold_wrap_scikit(X, Y, model, args, k=10, seed=args.seed)
+            with open('results-svm.txt', 'a+') as f:
+                f.write('Trn acc: {:.2f}, Trn stdev: {:.2f}, Tst acc {:.2f}, Tst stdev {:.2f}\n\n'.format(
+                    result[:,0].mean(), result[:,0].std(),
+                    result[:,1].mean(), result[:,1].std()
+                ))
+    if args.do_LSTM:
+        assert len(X.shape) == 3
+        X = X[:, :500, :]
+        model = LSTM_keras(X, Y)
+        history = model.fit(X[trn], Y[trn],
+                  epochs=args.epochs,
+                  validation_data=[X[tst], Y[tst]],
+                  batch_size=300,
+                  verbose=1,
+                  callbacks=[TensorBoard(log_dir=args.tensor_board)]
+        )
+        model.save(args.path_save_model + 'model-LSTM.h5')
+        y_pred = model.predict_classes(X[tst]).flatten()
+        train_acc = history.history['acc']
+        val_acc = history.history['val_acc']
+        np.save(args.path_save_model + 'train_acc_LSTM.npy', train_acc)
+        np.save(args.path_save_model + 'val_acc_LSTM.npy', val_acc)
+        print('LSTM classification report:')
+        print(classification_report(Y[tst], y_pred))
+        logging.info('Saved model to disk.')
+        sys.exit()
+        # checkpoint
+        filepath = args.path_save_model + \
+                   "weights-improvement-{epoch:02d}-{val_acc:.2f}.hdf5"
+        checkpoint = ModelCheckpoint(filepath,
+            monitor='val_acc',
+            verbose=1,
+            save_best_only=True,
+            mode='max'
+        )
+        callbacks_list = [checkpoint]
+        # Fit the model
+        model.fit(X, Y,
+            validation_split=0.15,
+            epochs=args.epochs,
+            batch_size=100,
+            callbacks=callbacks_list,
+            verbose=1
+        )
+        model_json = model.to_json()
+        with open(args.path_save_model + 'model-LSTM.json', 'w') as json_file:
+            json_file.write(model_json)
+        # serialize weights to HDF5
+        model.save_weights(args.path_save_model + 'model-LSTM.h5')
+        logging.info('Saved LSTM model to disk')
+    if args.do_NN:
+        if not args.explore_models:
+            #arch = [200, 100, 1]
+            #arch = [100, 1]
+            arch = [50, 1]
+            #arch = [400, 200, 100, 1]
+            act = 'sigmoid'
+            model = deep_logistic_keras(X[trn], Y[trn],
+                nodes_per_layer=arch,
+                do_dropout=args.fraction_dropout,
+                activation_type=act
+            )
+            history = model.fit(X[trn], Y[trn],
+                      epochs=args.epochs,
+                      validation_data=[X[tst], Y[tst]],
+                      batch_size=300,
+                      verbose=1,
+                      callbacks=[TensorBoard(log_dir=args.tensor_board)]
+            )
+            model.save(args.path_save_model + 'model-NN.h5')
+            y_pred = model.predict_classes(X[tst]).flatten()
+            train_acc = history.history['acc']
+            val_acc = history.history['val_acc']
+            np.save(args.path_save_model + 'train_acc_NN.npy', train_acc)
+            np.save(args.path_save_model + 'val_acc_NN.npy', val_acc)
+            np.save(args.path_save_model + 'NN-Y-for-ROC.npy', Y[tst])
+            np.save(args.path_save_model + 'NN-Y-pred-for-ROC.npy',
+                    model.predict(X[tst]).flatten())
+            print('NN classification report:')
+            print(classification_report(Y[tst], y_pred))
+            logging.info('Saved model to disk.')
+        else:
+            # Build model
+            for arch in [
+                [100, 1],
+                [50, 1]
+            ]:
+                for drop in [0.2]:
+                    for act in ['sigmoid']:
+                        model = deep_logistic_keras(X, Y,
+                            nodes_per_layer=arch,
+                            do_dropout=drop,
+                            activation_type=act
+                        )
+                        # K-fold cross-validation
+                        result = kfold_wrap(X, Y, model, args, k=5, seed=args.seed)
+                        print(result)
+                        to_write = 'Arch [ ' + ', '.join(map(str, arch)) + '], Drop ' + \
+                            str(drop) + ', Act ' + act + '\n'
+                        with open('results.txt', 'a+') as f:
+                            f.write(to_write)
+                            f.write('Trn acc: {:.2f}, Trn stdev: {:.2f}, Tst acc {:.2f}, Tst stdev {:.2f}\n\n'.format(
+                                result[:,0].mean(), result[:,0].std(),
+                                result[:,1].mean(), result[:,1].std()
+                            ))
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Build and tune models.'
     )
-    parser.add_argument('--train_test_split',
+    parser.add_argument('--fraction_train',
                         type=float,
                         required=False,
-                        default=0.8,
+                        default=0.9,
                         help='Fraction of data to use for training.')
     parser.add_argument('--fraction_dropout',
                         type=float,
@@ -223,7 +340,7 @@ if __name__ == '__main__':
     parser.add_argument('--epochs',
                         type=int,
                         required=False,
-                        default=3000,
+                        default=2000,
                         help='Number of epochs for training.')
     parser.add_argument('--tensor_board',
                         type=str,
@@ -235,5 +352,45 @@ if __name__ == '__main__':
                         required=False,
                         default=12345,
                         help='Seed for numpy RNG.')
+    parser.add_argument('--do_LSTM',
+                        type=int,
+                        required=False,
+                        default=0,
+                        help='Fit LSTM')
+    parser.add_argument('--do_NN',
+                        type=int,
+                        required=False,
+                        default=0,
+                        help='Fit NN')
+    parser.add_argument('--do_logistic',
+                        type=int,
+                        required=False,
+                        default=0,
+                        help='Fit logistic regression model')
+    parser.add_argument('--do_SVM',
+                        type=int,
+                        required=False,
+                        default=0,
+                        help='Fit SVM classification model')
+    parser.add_argument('--explore_models',
+                        type=int,
+                        required=False,
+                        default=0,
+                        help='Whether to explore and cross validate models.')
+    parser.add_argument('--path_bb_data',
+                        type=str,
+                        required=False,
+                        default='../data/preprocessed/preprocessed-billboard-no-subtract-scaled.npy',
+                        help='Path to preprocessed Billboard data.')
+    parser.add_argument('--path_not_bb_data',
+                        type=str,
+                        required=False,
+                        default='../data/preprocessed/preprocessed-not-billboard-no-subtract-scaled.npy',
+                        help='Path to preprocessed not-Billboard data.')
+    parser.add_argument('--path_save_model',
+                        type=str,
+                        required=False,
+                        default='../models/',
+                        help='Where to save the trained model.')
     args = parser.parse_args()
     main(args)
