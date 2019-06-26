@@ -53,15 +53,31 @@ def LSTM_keras(X, Y,
     return model
 
 
-def deep_logistic_keras(X_trn, Y_trn,
+def deep_logistic_keras(X,
                         nodes_per_layer=[50, 20, 1],
                         loss_type='binary_crossentropy',
                         optimizer=k.optimizers.Adam(lr=0.001),
-                        list_metrics=['accuracy'],
+                        metrics_list=['accuracy'],
                         do_batch_norm=True,
                         do_dropout=None,
                         activation_type='relu'):
-    """Builds a deep NN model to predict binary output.
+    """Build a deep NN classifier in Keras.
+
+    Args:
+        X (np.ndarray): Array with shape [n_examples, n_features]
+                        containing data examples.
+        nodes_per_layer (list of int): Number of nodes in each layer.
+        loss_type (str): The loss function to minimize.
+        optmizer (Keras optimizer): Keras optimizer with which to compile model.
+        metrics_list (list of str): Metrics to calculate during training.
+        do_batch_norm (bool): Whether to perform batch normalization after each
+                              hidden layer.
+        do_dropout (float/None): Dropout fraction to use.
+        activation_type (str): Type of activation function to apply to hidden
+                               layer outputs.
+        
+    Returns:
+        model (Keras model): Compiled Keras model.
     """
     # Initialize model
     model = Sequential()
@@ -100,7 +116,7 @@ def deep_logistic_keras(X_trn, Y_trn,
     # Compile
     model.compile(loss=loss_type,
                   optimizer=optimizer,
-                  metrics=list_metrics)
+                  metrics=metrics_list)
 
     return model
 
