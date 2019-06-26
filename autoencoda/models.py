@@ -42,47 +42,52 @@ def LSTM_keras(X, Y,
 def deep_logistic_keras(X_trn, Y_trn,
                         nodes_per_layer=[50, 20, 1],
                         loss_type='binary_crossentropy',
-                        opt_type='Adam',
+                        optimizer=k.optimizers.Adam(lr=0.001),
                         list_metrics=['accuracy'],
                         do_batch_norm=True,
                         do_dropout=None,
-                        activation='relu'):
+                        activation_type='relu'):
     """Builds a deep NN model to predict binary output.
     """
     # Initialize model
     model = Sequential()
+
     # Construct model layers
     N_layers = len(nodes_per_layer)
 
+    # Construct all laters
     for ilayer in range(N_layers):
         nodes = nodes_per_layer[ilayer]
+        last_layer = ilayer == (N_layers - 1)
 
         # Handles each kind of layer (input, output, hidden) appropriately
         if ilayer == 0:
-            model.add(Dense(nodes))
+            model.add(Dense(nodes, input_dim=X_trn.shape[1]))
         elif ilayer == N_layers - 1:
-            try:
-                assert nodes == 1, 'Output layer should have 1 node.'
-            except AssertionError:
-                logging.error('Binary classification should have 1 output node.')
+            assert nodes == 1, 'Output layer should have 1 node.'
             model.add(Dense(nodes, activation='sigmoid'))
         else:
             model.add(Dense(nodes))
 
-        # Activation
-        if not ilayer == N_layers - 1:
+        # Optional batch norm and dropout
+        if not last_layer:
             if do_dropout is not None:
-                assert do_dropout < 1.0 and do_dropout > 0.0, 'Dropout must be \
-                       fraction between 0.0 and 1.0.'
+                assert do_dropout < 1.0 and do_dropout >= 0.0, \
+                       'Dropout must be fraction between 0.0 and 1.0.'
                 model.add(Dropout(do_dropout))
+
             # Optional batch norm
             if do_batch_norm:
                 model.add(BatchNormalization())
-            model.add(Activation(activation))
+
+            # Add activation Function
+            model.add(Activation(activation_type))
+
     # Compile
     model.compile(loss=loss_type,
-                  optimizer=opt_type,
-                  metrics=['accuracy'])
+                  optimizer=optimizer,
+                  metrics=list_metrics)
+
     return model
 
 
