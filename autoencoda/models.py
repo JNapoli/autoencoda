@@ -224,11 +224,23 @@ def kfold_wrap_scikit(X, Y, model, args, k=10, batch=300, seed=1234):
 
 
 def load_data(path_bb_data, path_not_bb_data):
+    """Function to load data set.
+
+    Args:
+        path_bb_data (str): Path to Billboard data.
+        path_not_bb_data (str): Path to not-Billboard data.
+
+    Returns:
+        (X, Y) (tuple): Data set. X has shape [n_samples, n_features], Y has
+                        size [n_samples].
+    """
+    assert os.path.exists(path_bb_data) and os.path.exists(path_not_bb_data), \
+           "The files you specified do not exist."
     X_1 = np.load(path_bb_data)
     X_0 = np.load(path_not_bb_data)
     X = np.concatenate((X_1, X_0))
     assert X.shape[0] == (X_1.shape[0] + X_0.shape[0]), \
-           'Concatenate is not doing the right thing.'
+           'np.concatenate is not doing the right thing.'
     Y = np.hstack((np.ones(X_1.shape[0]),
                    np.zeros(X_0.shape[0])))
     assert X.shape[0] == Y.size, \
