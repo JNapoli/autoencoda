@@ -381,18 +381,25 @@ def main(args):
                       verbose=1,
                       callbacks=[TensorBoard(log_dir=args.tensor_board)]
             )
-            model.save(args.path_save_model + 'model-NN.h5')
+            path_model = os.path.join(args.path_save_model,
+                                      'model-NN.h5')
+            model.save(path_model)
+            logging.info('Saved model to {:s}'.format(path_model))
             y_pred = model.predict_classes(X[tst]).flatten()
             train_acc = history.history['acc']
             val_acc = history.history['val_acc']
-            np.save(args.path_save_model + 'train_acc_NN.npy', train_acc)
-            np.save(args.path_save_model + 'val_acc_NN.npy', val_acc)
-            np.save(args.path_save_model + 'NN-Y-for-ROC.npy', Y[tst])
-            np.save(args.path_save_model + 'NN-Y-pred-for-ROC.npy',
-                    model.predict(X[tst]).flatten())
-            print('NN classification report:')
-            print(classification_report(Y[tst], y_pred))
-            logging.info('Saved model to disk.')
+            path_train_acc = os.path.join(args.path_save_model,
+                                          'train_acc_NN.npy')
+            path_val_acc = os.path.join(args.path_save_model,
+                                        'val_acc_NN.npy')
+            path_y_pred = os.path.join(args.path_save_model,
+                                       'NN-Y-pred-for-ROC.npy')
+            path_y_true = os.path.join(args.path_save_model,
+                                       'NN-Y-for-ROC.npy')
+            np.save(path_train_acc, train_acc)
+            np.save(path_val_acc, val_acc)
+            np.save(path_y_true, Y[tst])
+            np.save(path_y_pred, model.predict(X[tst]).flatten())
         else:
             # Build model
             for arch in [
