@@ -249,6 +249,15 @@ def load_data(path_bb_data, path_not_bb_data):
 
 
 def log_data_summary(X, Y):
+    """Sanity check that logs the number of each class. 
+
+    Args:
+        X (np.ndarray): Data set
+        Y (np.ndarray): Labels
+
+    Returns:
+        None
+    """
     N_total = Y.size
     N_1 = Y.sum()
     N_0 = N_total - N_1
