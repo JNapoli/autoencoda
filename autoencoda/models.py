@@ -1,5 +1,6 @@
 import argparse
 import logging
+import os
 import sys
 
 import numpy as np
@@ -132,6 +133,7 @@ def logistic_regression_keras(X,
         initializer (Keras initializer): Keras initializer to use for dense layers.
 
     Returns:
+        model (Keras model): Compiled Keras model.
     """
     # Build and compile model
     model = Sequential()
@@ -143,6 +145,19 @@ def logistic_regression_keras(X,
                   optimizer=optimizer,
                   metrics=metrics_list)
     return model
+
+
+def reset_weights(model):
+    """Reset the weights of a previously compiled keras model.
+
+    Args:
+        model (Keras model): A compiled keras model.
+    """
+    session = k.backend.get_session()
+    for layer in model.layers:
+        if hasattr(layer, 'kernel_initializer'):
+            layer.kernel.initializer.run(session=session)
+    return None
 
 
 def kfold_wrap(X, Y, model, args,
