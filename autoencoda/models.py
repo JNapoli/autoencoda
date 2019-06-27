@@ -165,14 +165,30 @@ def reset_weights(model):
 
 def kfold_wrap(X, Y, model, args,
                k=10,
-               batch=300,
+               batch=500,
                verbose=True,
-               seed=1234,
-               val_split=0.2):
+               seed=1234):
+    """Wrapper function that performs stratified k-fold cross-validation of the model.
+
+    Args:
+        X (np.ndarray): Array with shape [n_examples, n_features]
+                        containing data examples.
+        Y (np.ndarray): Array with size n_examples.
+        model (Keras model): Keras model to use for cross-validation.
+        args :
+        k (int): Number of folds to use for cross-validation.
+        batch (int): Number of examples to use per batch.
+        verbose (bool): Verbosity level for training.
+        seed (int): Number to use for random number seeding.
+
+    Returns:
+        cv_scores (np.ndarray): Numpy array of shape [k, 2] containing the training
+                                and validation accuracies.
+    """
     cv_scores = []
     kfold = StratifiedKFold(n_splits=k, shuffle=True, random_state=seed)
-
-    for trn, tst in kfold.split(X, Y):
+    for ifold, (trn, tst) in enumerate(kfold.split(X, Y), start=1):
+        reset_weights(model)
         model.fit(X[trn], Y[trn],
                   validation_data=[X[tst], Y[tst]],
                   epochs=args.epochs,
@@ -180,14 +196,19 @@ def kfold_wrap(X, Y, model, args,
                   verbose=1,
                   callbacks=[TensorBoard(log_dir=args.tensor_board)]
         )
-        model.save(args.path_save_model + 'model-latest.h5')
+        model_path = os.path.join(args.path_save_model,
+                                  'model-fold-{:d}.h5'.format(ifold))
+        model.save(model_path)
         scores_tst = model.evaluate(X[tst], Y[tst], verbose=0)
         scores_trn = model.evaluate(X[trn], Y[trn], verbose=0)
-        assert model.metrics_names[1] == 'acc'
+        assert model.metrics_names[1] == 'acc', \
+               'Double check the metrics you are using. I expect "accuracy".'
         cv_scores.append([scores_trn[1]*100, scores_tst[1]*100])
-        logging.info('Trn acc: {:.2f}, Tst acc {:.2f}\n\n'.format(
-            result[:,0].mean(), result[:,0].std(),
-            result[:,1].mean(), result[:,1].std()
+        # Logging accuracies so we can monitor them while training.
+        logging.info('Fold {:d}: Trn acc {:.2f}, Val acc {:.2f}\n\n'.format(
+            ifold,
+            np.array(cv_scores)[:,0].mean(),
+            np.array(cv_scores)[:,1].mean()
         ))
     return np.array(cv_scores)
 
