@@ -492,8 +492,7 @@ if __name__ == '__main__':
                         help='Path to preprocessed not-Billboard data.')
     parser.add_argument('--path_save_model',
                         type=str,
-                        required=False,
-                        default='../models/',
-                        help='Where to save the trained model.')
+                        required=True,
+                        help='Where to save the trained model and related files.')
     args = parser.parse_args()
     main(args)
