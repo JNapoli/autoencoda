@@ -282,6 +282,10 @@ def main(args):
     # Print summary of data
     log_data_summary(X, Y)
 
+    # Make sure storage location exists
+    if not os.path.exists(args.path_save_model):
+        os.mkdir(args.path_save_model)
+
     # Test models
     if args.do_logistic:
         model = logistic_regression_keras(X, Y)
