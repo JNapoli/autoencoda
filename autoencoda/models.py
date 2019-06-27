@@ -16,8 +16,8 @@ from tensorflow.keras.models import Sequential
 
 
 def LSTM_keras(X, Y,
-               loss_type='binary_crossentropy',
                N=32,
+               loss_type='binary_crossentropy',
                optimizer=k.optimizers.Adam(lr=0.01),
                do_dropout=None,
                metrics_list=['accuracy']):
@@ -27,9 +27,9 @@ def LSTM_keras(X, Y,
         X (np.ndarray): Array with shape [n_examples, n_timesteps, n_features]
                         containing data examples.
         Y (np.ndarray): Array with size [n_examples].
-        loss_type (str): The loss function to minimize.
         N (int): Number of units for LSTM.
-        optmizer (Keras optimizer): Keras optimizer with which to compile model.
+        loss_type (str): The loss function to minimize.
+        optimizer (Keras optimizer): Keras optimizer with which to compile model.
         do_dropout (float/None): Dropout fraction to use.
         metrics_list (list of str): Metrics to calculate during training.
 
@@ -70,7 +70,7 @@ def deep_logistic_keras(X,
                         containing data examples.
         nodes_per_layer (list of int): Number of nodes in each layer.
         loss_type (str): The loss function to minimize.
-        optmizer (Keras optimizer): Keras optimizer with which to compile model.
+        optimizer (Keras optimizer): Keras optimizer with which to compile model.
         metrics_list (list of str): Metrics to calculate during training.
         do_batch_norm (bool): Whether to perform batch normalization after each
                               hidden layer.
@@ -152,6 +152,9 @@ def reset_weights(model):
 
     Args:
         model (Keras model): A compiled keras model.
+
+    Returns:
+        None
     """
     session = k.backend.get_session()
     for layer in model.layers:
