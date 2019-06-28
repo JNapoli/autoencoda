@@ -9,6 +9,8 @@ import sys
 import time
 import wget
 
+import preprocess
+
 import numpy as np
 import spotipy.util as su
 
@@ -156,8 +158,8 @@ def main(args):
 
                 # Get Spotify tags.
                 bill_item = get_spotify_from_billboard(item[0],
-                                                        item[1],
-                                                        spotify)
+                                                       item[1],
+                                                       spotify)
 
                 # Only process tracks with Spotify IDs and previews.
                 if None in bill_item or not has_mp3_preview(bill_item[0], spotify):
@@ -168,10 +170,13 @@ def main(args):
 
                 # Build track
                 path_tracks_billboard = '../data/cache_tracks_billboard/'
-                assert os.path.exists(path_tracks_billboard), 'Where are the \
-                       Billboard tracks.'
-                path_track = os.path.join(path_tracks_billboard,
-                                          URI_track + '.p')
+                assert os.path.exists(path_tracks_billboard), \
+                       'Directory to contain Billboard tracks does not exist.'
+                path_track = os.path.join(path_tracks_billboard, URI_track + '.p')
+
+                # Keep track of artists and tracks in Billboard set.
+                URIs_billboard_tracks.append(URI_track)
+                URIs_billboard_artists.append(URI_artist)
 
                 # Only build tracks we haven't built before.
                 if os.path.exists(path_track): continue
@@ -184,10 +189,6 @@ def main(args):
                 # Cache track.
                 with open(path_track, 'wb') as f:
                      pickle.dump(track_to_save, f, protocol=pickle.HIGHEST_PROTOCOL)
-
-                # Keep track of artists and tracks in Billboard set.
-                URIs_billboard_tracks.append(URI_track)
-                URIs_billboard_artists.append(URI_artist)
 
             # Sometimes connection or token exceptions happen.
             except spotipy.client.SpotifyException:
@@ -301,5 +302,10 @@ if __name__ == '__main__':
                         required=False,
                         help='Whether to ingest songs that did not appear on \
                              billboard.')
+    parser.add_argument('--do_genres',
+                        type=int,
+                        default=0,
+                        required=False,
+                        help='Whether to extract genres.')
     args = parser.parse_args()
     main(args)
