@@ -345,10 +345,7 @@ def main(args):
         np.save(path_y_true,  y_true)
     if args.do_NN:
         if not args.explore_models:
-            #arch = [200, 100, 1]
-            #arch = [100, 1]
             arch = [50, 1]
-            #arch = [400, 200, 100, 1]
             act = 'sigmoid'
             model = deep_logistic_keras(X[trn], Y[trn],
                 nodes_per_layer=arch,
