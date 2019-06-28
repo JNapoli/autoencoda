@@ -296,18 +296,21 @@ def main(args):
                   verbose=1,
                   callbacks=[TensorBoard(log_dir=args.tensor_board)]
         )
-        model.save(args.path_save_model + 'model-logistic.h5')
+        # Keep paths tidy
+        path_model = os.path.join(args.path_save_model, 'model-logistic.h5')
+        path_trn_acc = os.path.join(args.path_save_model, 'train-acc-logistic.npy')
+        path_val_acc = os.path.join(args.path_save_model, 'val-acc-logistic.npy')
+        path_y_pred = os.path.join(args.path_save_model, 'logistic-Y-pred-for-ROC.npy')
+        path_y_true = os.path.join(args.path_save_model, 'logistic-Y-for-ROC.npy')
+        # Save model and data
+        model.save(path_model)
         y_pred = model.predict_classes(X[tst]).flatten()
         train_acc = history.history['acc']
         val_acc = history.history['val_acc']
-        np.save(args.path_save_model + 'train_acc_logistic.npy', train_acc)
-        np.save(args.path_save_model + 'val_acc_logistic.npy', val_acc)
-        print('Logistic regression classification report:')
-        print(classification_report(Y[tst], y_pred))
-        logging.info('Saved model to disk.')
-        np.save(args.path_save_model + 'logistic-Y-for-ROC.npy', Y[tst])
-        np.save(args.path_save_model + 'logistic-Y-pred-for-ROC.npy',
-                model.predict(X[tst]).flatten())
+        np.save(path_trn_acc, train_acc)
+        np.save(path_val_acc, val_acc)
+        np.save(path_y_true, Y[tst])
+        np.save(path_y_pred, y_pred)
     if args.do_SVM:
         for c in [0.01, 0.1, 1.0, 10.0]:
             model = SVC(C=c, verbose=True)
@@ -329,11 +332,11 @@ def main(args):
                   callbacks=[TensorBoard(log_dir=args.tensor_board)])
         # Keep paths tidy
         path_model = os.path.join(args.path_save_model, 'model-LSTM.h5')
-        path_trn_acc = os.path.join(args.path_save_model, 'train_acc_LSTM.npy')
-        path_val_acc = os.path.join(args.path_save_model, 'val_acc_LSTM.npy')
+        path_trn_acc = os.path.join(args.path_save_model, 'train-acc-LSTM.npy')
+        path_val_acc = os.path.join(args.path_save_model, 'val-acc-LSTM.npy')
         path_y_pred = os.path.join(args.path_save_model, 'LSTM-Y-pred-for-ROC.npy')
         path_y_true = os.path.join(args.path_save_model, 'LSTM-Y-for-ROC.npy')
-        # Save all data
+        # Save model and data
         y_pred = model.predict_classes(X[tst]).flatten()
         y_true = Y[tst]
         train_acc = history.history['acc']
@@ -368,9 +371,9 @@ def main(args):
             val_acc = history.history['val_acc']
             # Keep paths tidy
             path_train_acc = os.path.join(args.path_save_model,
-                                          'train_acc_NN.npy')
+                                          'train-acc-NN.npy')
             path_val_acc = os.path.join(args.path_save_model,
-                                        'val_acc_NN.npy')
+                                        'val-acc-NN.npy')
             path_y_pred = os.path.join(args.path_save_model,
                                        'NN-Y-pred-for-ROC.npy')
             path_y_true = os.path.join(args.path_save_model,
