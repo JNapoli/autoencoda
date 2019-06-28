@@ -249,7 +249,7 @@ def load_data(path_bb_data, path_not_bb_data):
 
 
 def log_data_summary(X, Y):
-    """Sanity check that logs the number of each class. 
+    """Sanity check that logs the number of each class.
 
     Args:
         X (np.ndarray): Data set
@@ -326,42 +326,23 @@ def main(args):
                   validation_data=[X[tst], Y[tst]],
                   batch_size=300,
                   verbose=1,
-                  callbacks=[TensorBoard(log_dir=args.tensor_board)]
-        )
-        model.save(args.path_save_model + 'model-LSTM.h5')
+                  callbacks=[TensorBoard(log_dir=args.tensor_board)])
+        # Keep paths tidy
+        path_model = os.path.join(args.path_save_model, 'model-LSTM.h5')
+        path_trn_acc = os.path.join(args.path_save_model, 'train_acc_LSTM.npy')
+        path_val_acc = os.path.join(args.path_save_model, 'val_acc_LSTM.npy')
+        path_y_pred = os.path.join(args.path_save_model, 'LSTM-Y-pred-for-ROC.npy')
+        path_y_true = os.path.join(args.path_save_model, 'LSTM-Y-for-ROC.npy')
+        # Save all data
         y_pred = model.predict_classes(X[tst]).flatten()
+        y_true = Y[tst]
         train_acc = history.history['acc']
         val_acc = history.history['val_acc']
-        np.save(args.path_save_model + 'train_acc_LSTM.npy', train_acc)
-        np.save(args.path_save_model + 'val_acc_LSTM.npy', val_acc)
-        print('LSTM classification report:')
-        print(classification_report(Y[tst], y_pred))
-        logging.info('Saved model to disk.')
-        sys.exit()
-        # checkpoint
-        filepath = args.path_save_model + \
-                   "weights-improvement-{epoch:02d}-{val_acc:.2f}.hdf5"
-        checkpoint = ModelCheckpoint(filepath,
-            monitor='val_acc',
-            verbose=1,
-            save_best_only=True,
-            mode='max'
-        )
-        callbacks_list = [checkpoint]
-        # Fit the model
-        model.fit(X, Y,
-            validation_split=0.15,
-            epochs=args.epochs,
-            batch_size=100,
-            callbacks=callbacks_list,
-            verbose=1
-        )
-        model_json = model.to_json()
-        with open(args.path_save_model + 'model-LSTM.json', 'w') as json_file:
-            json_file.write(model_json)
-        # serialize weights to HDF5
-        model.save_weights(args.path_save_model + 'model-LSTM.h5')
-        logging.info('Saved LSTM model to disk')
+        model.save(path_model)
+        np.save(path_trn_acc, train_acc)
+        np.save(path_val_acc, val_acc)
+        np.save(path_y_pred,  y_pred)
+        np.save(path_y_true,  y_true)
     if args.do_NN:
         if not args.explore_models:
             #arch = [200, 100, 1]
