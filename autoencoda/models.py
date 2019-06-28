@@ -1,13 +1,13 @@
 import argparse
 import logging
+import os
 import sys
 
 import numpy as np
 import tensorflow.keras as k
 
 from sklearn.metrics import classification_report
-from sklearn.model_selection import StratifiedKFold, StratifiedShuffleSplit, \
-                                    train_test_split
+from sklearn.model_selection import StratifiedKFold, StratifiedShuffleSplit
 from sklearn.svm import SVC
 from tensorflow.keras.callbacks import ModelCheckpoint, TensorBoard
 from tensorflow.keras.layers import Activation, BatchNormalization, \
@@ -16,12 +16,25 @@ from tensorflow.keras.models import Sequential
 
 
 def LSTM_keras(X, Y,
-               loss_type='binary_crossentropy',
                N=32,
+               loss_type='binary_crossentropy',
                optimizer=k.optimizers.Adam(lr=0.01),
                do_dropout=None,
-               list_metrics=['accuracy']):
-    """Baseline LSTM model for spectrogram classification.
+               metrics_list=['accuracy']):
+    """Build an LSTM model in Keras.
+
+    Args:
+        X (np.ndarray): Array with shape [n_examples, n_timesteps, n_features]
+                        containing data examples.
+        Y (np.ndarray): Array with size [n_examples].
+        N (int): Number of units for LSTM.
+        loss_type (str): The loss function to minimize.
+        optimizer (Keras optimizer): Keras optimizer with which to compile model.
+        do_dropout (float/None): Dropout fraction to use.
+        metrics_list (list of str): Metrics to calculate during training.
+
+    Returns:
+        model (Keras model): Compiled Keras model.
     """
     # Data set dimensions
     _, n_timesteps, n_features = X.shape
@@ -31,98 +44,151 @@ def LSTM_keras(X, Y,
     model.add(LSTM(N, input_shape=(n_timesteps, n_features), return_sequences=True))
     model.add(LSTM(N))
     if do_dropout is not None:
+        if not (do_dropout >= 0.0 and do_dropout < 1.0):
+            raise ValueError('Dropout fraction specification is not correct.')
         model.add(Dropout(do_dropout))
     model.add(Dense(1, activation='sigmoid'))
     model.compile(loss=loss_type,
                   optimizer=optimizer,
-                  metrics=list_metrics)
+                  metrics=metrics_list)
     return model
 
 
-def deep_logistic_keras(X_trn, Y_trn,
+def deep_logistic_keras(X,
                         nodes_per_layer=[50, 20, 1],
                         loss_type='binary_crossentropy',
                         optimizer=k.optimizers.Adam(lr=0.001),
-                        list_metrics=['accuracy'],
+                        metrics_list=['accuracy'],
                         do_batch_norm=True,
                         do_dropout=None,
-                        activation_type='relu'):
-    """Builds a deep NN model to predict binary output.
+                        activation_type='relu',
+                        initializer=k.initializers.RandomNormal(mean=0.0, stddev=0.05)):
+    """Build a deep NN classifier in Keras.
+
+    Args:
+        X (np.ndarray): Array with shape [n_examples, n_features]
+                        containing data examples.
+        nodes_per_layer (list of int): Number of nodes in each layer.
+        loss_type (str): The loss function to minimize.
+        optimizer (Keras optimizer): Keras optimizer with which to compile model.
+        metrics_list (list of str): Metrics to calculate during training.
+        do_batch_norm (bool): Whether to perform batch normalization after each
+                              hidden layer.
+        do_dropout (float/None): Dropout fraction to use.
+        activation_type (str): Type of activation function to apply to hidden
+                               layer outputs.
+        initializer (Keras initializer): Keras initializer to use for dense layers.
+
+    Returns:
+        model (Keras model): Compiled Keras model.
     """
     # Initialize model
     model = Sequential()
-
-    # Construct model layers
     N_layers = len(nodes_per_layer)
 
-    # Construct all laters
     for ilayer in range(N_layers):
         nodes = nodes_per_layer[ilayer]
         last_layer = ilayer == (N_layers - 1)
-
         # Handles each kind of layer (input, output, hidden) appropriately
         if ilayer == 0:
-            model.add(Dense(nodes, input_dim=X_trn.shape[1]))
+            model.add(Dense(nodes,
+                            input_dim=X.shape[1],
+                            kernel_initializer=initializer))
         elif ilayer == N_layers - 1:
             assert nodes == 1, 'Output layer should have 1 node.'
-            model.add(Dense(nodes, activation='sigmoid'))
+            model.add(Dense(nodes,
+                            activation='sigmoid',
+                            kernel_initializer=initializer))
         else:
-            model.add(Dense(nodes))
-
+            model.add(Dense(nodes, kernel_initializer=initializer))
         # Optional batch norm and dropout
         if not last_layer:
             if do_dropout is not None:
                 assert do_dropout < 1.0 and do_dropout >= 0.0, \
                        'Dropout must be fraction between 0.0 and 1.0.'
                 model.add(Dropout(do_dropout))
-
-            # Optional batch norm
             if do_batch_norm:
                 model.add(BatchNormalization())
-
             # Add activation Function
             model.add(Activation(activation_type))
-
     # Compile
     model.compile(loss=loss_type,
                   optimizer=optimizer,
-                  metrics=list_metrics)
-
+                  metrics=metrics_list)
     return model
 
 
-def logistic_regression_keras(X, Y,
+def logistic_regression_keras(X,
                               loss_type='binary_crossentropy',
-                              optimizer=k.optimizers.Adam(lr=0.01),
-                              list_metrics=['accuracy'],
-                              print_summary=False,
-                              **kwargs):
-    """Logistic regression baseline model
+                              optimizer=k.optimizers.Adam(lr=0.001),
+                              metrics_list=['accuracy'],
+                              initializer=k.initializers.RandomNormal(mean=0.0, stddev=0.05)):
+    """Logistic regression model built in Keras.
+
+    Args:
+        X (np.ndarray): Training data with shape [n_samples, n_features].
+        loss_type (str): The loss function to minimize.
+        optmizer (Keras optimizer): Keras optimizer with which to compile model.
+        metrics_list (list of str): Metrics to calculate during training.
+        initializer (Keras initializer): Keras initializer to use for dense layers.
+
+    Returns:
+        model (Keras model): Compiled Keras model.
     """
-    # Initialize model
+    # Build and compile model
     model = Sequential()
-    model.add(Dense(1, input_dim=X.shape[1], activation='sigmoid'))
-    # Compile and fit
+    model.add(Dense(1,
+                    input_dim=X.shape[1],
+                    kernel_initializer=initializer,
+                    activation='sigmoid'))
     model.compile(loss=loss_type,
                   optimizer=optimizer,
-                  metrics=list_metrics)
-    # For debugging
-    if print_summary:
-        print('Logistic regression model summary:')
-        print(model.summary())
+                  metrics=metrics_list)
     return model
+
+
+def reset_weights(model):
+    """Reset the weights of a previously compiled keras model.
+
+    Args:
+        model (Keras model): A compiled keras model.
+
+    Returns:
+        None
+    """
+    session = k.backend.get_session()
+    for layer in model.layers:
+        if hasattr(layer, 'kernel_initializer'):
+            layer.kernel.initializer.run(session=session)
+    return None
 
 
 def kfold_wrap(X, Y, model, args,
                k=10,
-               batch=300,
+               batch=500,
                verbose=True,
-               seed=1234,
-               val_split=0.2):
+               seed=1234):
+    """Wrapper function that performs stratified k-fold cross-validation of the model.
+
+    Args:
+        X (np.ndarray): Array with shape [n_examples, n_features]
+                        containing data examples.
+        Y (np.ndarray): Array with size n_examples.
+        model (Keras model): Keras model to use for cross-validation.
+        args :
+        k (int): Number of folds to use for cross-validation.
+        batch (int): Number of examples to use per batch.
+        verbose (bool): Verbosity level for training.
+        seed (int): Number to use for random number seeding.
+
+    Returns:
+        cv_scores (np.ndarray): Numpy array of shape [k, 2] containing the training
+                                and validation accuracies.
+    """
     cv_scores = []
     kfold = StratifiedKFold(n_splits=k, shuffle=True, random_state=seed)
-
-    for trn, tst in kfold.split(X, Y):
+    for ifold, (trn, tst) in enumerate(kfold.split(X, Y), start=1):
+        reset_weights(model)
         model.fit(X[trn], Y[trn],
                   validation_data=[X[tst], Y[tst]],
                   epochs=args.epochs,
@@ -130,14 +196,19 @@ def kfold_wrap(X, Y, model, args,
                   verbose=1,
                   callbacks=[TensorBoard(log_dir=args.tensor_board)]
         )
-        model.save(args.path_save_model + 'model-latest.h5')
+        model_path = os.path.join(args.path_save_model,
+                                  'model-fold-{:d}.h5'.format(ifold))
+        model.save(model_path)
         scores_tst = model.evaluate(X[tst], Y[tst], verbose=0)
         scores_trn = model.evaluate(X[trn], Y[trn], verbose=0)
-        assert model.metrics_names[1] == 'acc'
+        assert model.metrics_names[1] == 'acc', \
+               'Double check the metrics you are using. I expect "accuracy".'
         cv_scores.append([scores_trn[1]*100, scores_tst[1]*100])
-        logging.info('Trn acc: {:.2f}, Tst acc {:.2f}\n\n'.format(
-            result[:,0].mean(), result[:,0].std(),
-            result[:,1].mean(), result[:,1].std()
+        # Logging accuracies so we can monitor them while training.
+        logging.info('Fold {:d}: Trn acc {:.2f}, Val acc {:.2f}\n\n'.format(
+            ifold,
+            np.array(cv_scores)[:,0].mean(),
+            np.array(cv_scores)[:,1].mean()
         ))
     return np.array(cv_scores)
 
@@ -153,11 +224,23 @@ def kfold_wrap_scikit(X, Y, model, args, k=10, batch=300, seed=1234):
 
 
 def load_data(path_bb_data, path_not_bb_data):
+    """Function to load data set.
+
+    Args:
+        path_bb_data (str): Path to Billboard data.
+        path_not_bb_data (str): Path to not-Billboard data.
+
+    Returns:
+        (X, Y) (tuple): Data set. X has shape [n_samples, n_features], Y has
+                        size [n_samples].
+    """
+    assert os.path.exists(path_bb_data) and os.path.exists(path_not_bb_data), \
+           "The files you specified do not exist."
     X_1 = np.load(path_bb_data)
     X_0 = np.load(path_not_bb_data)
     X = np.concatenate((X_1, X_0))
     assert X.shape[0] == (X_1.shape[0] + X_0.shape[0]), \
-           'Concatenate is not doing the right thing.'
+           'np.concatenate is not doing the right thing.'
     Y = np.hstack((np.ones(X_1.shape[0]),
                    np.zeros(X_0.shape[0])))
     assert X.shape[0] == Y.size, \
@@ -166,6 +249,15 @@ def load_data(path_bb_data, path_not_bb_data):
 
 
 def log_data_summary(X, Y):
+    """Sanity check that logs the number of each class.
+
+    Args:
+        X (np.ndarray): Data set
+        Y (np.ndarray): Labels
+
+    Returns:
+        None
+    """
     N_total = Y.size
     N_1 = Y.sum()
     N_0 = N_total - N_1
@@ -190,6 +282,10 @@ def main(args):
     # Print summary of data
     log_data_summary(X, Y)
 
+    # Make sure storage location exists
+    if not os.path.exists(args.path_save_model):
+        os.mkdir(args.path_save_model)
+
     # Test models
     if args.do_logistic:
         model = logistic_regression_keras(X, Y)
@@ -200,18 +296,21 @@ def main(args):
                   verbose=1,
                   callbacks=[TensorBoard(log_dir=args.tensor_board)]
         )
-        model.save(args.path_save_model + 'model-logistic.h5')
+        # Keep paths tidy
+        path_model = os.path.join(args.path_save_model, 'model-logistic.h5')
+        path_trn_acc = os.path.join(args.path_save_model, 'train-acc-logistic.npy')
+        path_val_acc = os.path.join(args.path_save_model, 'val-acc-logistic.npy')
+        path_y_pred = os.path.join(args.path_save_model, 'logistic-Y-pred-for-ROC.npy')
+        path_y_true = os.path.join(args.path_save_model, 'logistic-Y-for-ROC.npy')
+        # Save model and data
+        model.save(path_model)
         y_pred = model.predict_classes(X[tst]).flatten()
         train_acc = history.history['acc']
         val_acc = history.history['val_acc']
-        np.save(args.path_save_model + 'train_acc_logistic.npy', train_acc)
-        np.save(args.path_save_model + 'val_acc_logistic.npy', val_acc)
-        print('Logistic regression classification report:')
-        print(classification_report(Y[tst], y_pred))
-        logging.info('Saved model to disk.')
-        np.save(args.path_save_model + 'logistic-Y-for-ROC.npy', Y[tst])
-        np.save(args.path_save_model + 'logistic-Y-pred-for-ROC.npy',
-                model.predict(X[tst]).flatten())
+        np.save(path_trn_acc, train_acc)
+        np.save(path_val_acc, val_acc)
+        np.save(path_y_true, Y[tst])
+        np.save(path_y_pred, y_pred)
     if args.do_SVM:
         for c in [0.01, 0.1, 1.0, 10.0]:
             model = SVC(C=c, verbose=True)
@@ -230,48 +329,26 @@ def main(args):
                   validation_data=[X[tst], Y[tst]],
                   batch_size=300,
                   verbose=1,
-                  callbacks=[TensorBoard(log_dir=args.tensor_board)]
-        )
-        model.save(args.path_save_model + 'model-LSTM.h5')
+                  callbacks=[TensorBoard(log_dir=args.tensor_board)])
+        # Keep paths tidy
+        path_model = os.path.join(args.path_save_model, 'model-LSTM.h5')
+        path_trn_acc = os.path.join(args.path_save_model, 'train-acc-LSTM.npy')
+        path_val_acc = os.path.join(args.path_save_model, 'val-acc-LSTM.npy')
+        path_y_pred = os.path.join(args.path_save_model, 'LSTM-Y-pred-for-ROC.npy')
+        path_y_true = os.path.join(args.path_save_model, 'LSTM-Y-for-ROC.npy')
+        # Save model and data
         y_pred = model.predict_classes(X[tst]).flatten()
+        y_true = Y[tst]
         train_acc = history.history['acc']
         val_acc = history.history['val_acc']
-        np.save(args.path_save_model + 'train_acc_LSTM.npy', train_acc)
-        np.save(args.path_save_model + 'val_acc_LSTM.npy', val_acc)
-        print('LSTM classification report:')
-        print(classification_report(Y[tst], y_pred))
-        logging.info('Saved model to disk.')
-        sys.exit()
-        # checkpoint
-        filepath = args.path_save_model + \
-                   "weights-improvement-{epoch:02d}-{val_acc:.2f}.hdf5"
-        checkpoint = ModelCheckpoint(filepath,
-            monitor='val_acc',
-            verbose=1,
-            save_best_only=True,
-            mode='max'
-        )
-        callbacks_list = [checkpoint]
-        # Fit the model
-        model.fit(X, Y,
-            validation_split=0.15,
-            epochs=args.epochs,
-            batch_size=100,
-            callbacks=callbacks_list,
-            verbose=1
-        )
-        model_json = model.to_json()
-        with open(args.path_save_model + 'model-LSTM.json', 'w') as json_file:
-            json_file.write(model_json)
-        # serialize weights to HDF5
-        model.save_weights(args.path_save_model + 'model-LSTM.h5')
-        logging.info('Saved LSTM model to disk')
+        model.save(path_model)
+        np.save(path_trn_acc, train_acc)
+        np.save(path_val_acc, val_acc)
+        np.save(path_y_pred,  y_pred)
+        np.save(path_y_true,  y_true)
     if args.do_NN:
         if not args.explore_models:
-            #arch = [200, 100, 1]
-            #arch = [100, 1]
             arch = [50, 1]
-            #arch = [400, 200, 100, 1]
             act = 'sigmoid'
             model = deep_logistic_keras(X[trn], Y[trn],
                 nodes_per_layer=arch,
@@ -285,18 +362,27 @@ def main(args):
                       verbose=1,
                       callbacks=[TensorBoard(log_dir=args.tensor_board)]
             )
-            model.save(args.path_save_model + 'model-NN.h5')
+            path_model = os.path.join(args.path_save_model,
+                                      'model-NN.h5')
+            model.save(path_model)
+            logging.info('Saved model to {:s}'.format(path_model))
             y_pred = model.predict_classes(X[tst]).flatten()
             train_acc = history.history['acc']
             val_acc = history.history['val_acc']
-            np.save(args.path_save_model + 'train_acc_NN.npy', train_acc)
-            np.save(args.path_save_model + 'val_acc_NN.npy', val_acc)
-            np.save(args.path_save_model + 'NN-Y-for-ROC.npy', Y[tst])
-            np.save(args.path_save_model + 'NN-Y-pred-for-ROC.npy',
-                    model.predict(X[tst]).flatten())
-            print('NN classification report:')
-            print(classification_report(Y[tst], y_pred))
-            logging.info('Saved model to disk.')
+            # Keep paths tidy
+            path_train_acc = os.path.join(args.path_save_model,
+                                          'train-acc-NN.npy')
+            path_val_acc = os.path.join(args.path_save_model,
+                                        'val-acc-NN.npy')
+            path_y_pred = os.path.join(args.path_save_model,
+                                       'NN-Y-pred-for-ROC.npy')
+            path_y_true = os.path.join(args.path_save_model,
+                                       'NN-Y-for-ROC.npy')
+            # Save data
+            np.save(path_train_acc, train_acc)
+            np.save(path_val_acc, val_acc)
+            np.save(path_y_true, Y[tst])
+            np.save(path_y_pred, model.predict(X[tst]).flatten())
         else:
             # Build model
             for arch in [
@@ -305,19 +391,20 @@ def main(args):
             ]:
                 for drop in [0.2]:
                     for act in ['sigmoid']:
-                        model = deep_logistic_keras(X, Y,
-                            nodes_per_layer=arch,
-                            do_dropout=drop,
-                            activation_type=act
+                        model = deep_logistic_keras(X,
+                                                    nodes_per_layer=arch,
+                                                    do_dropout=drop,
+                                                    activation_type=act
                         )
-                        # K-fold cross-validation
+                        # Cross-validation
                         result = kfold_wrap(X, Y, model, args, k=5, seed=args.seed)
-                        print(result)
-                        to_write = 'Arch [ ' + ', '.join(map(str, arch)) + '], Drop ' + \
-                            str(drop) + ', Act ' + act + '\n'
-                        with open('results.txt', 'a+') as f:
+                        to_write = 'Arch [ ' + ', '.join(map(str, arch)) + \
+                            '], Drop ' + str(drop) + ', Act ' + act + '\n'
+                        path_results = os.path.join(args.path_save_model,
+                                                    'kfold-results-NN.txt')
+                        with open(path_results, 'a+') as f:
                             f.write(to_write)
-                            f.write('Trn acc: {:.2f}, Trn stdev: {:.2f}, Tst acc {:.2f}, Tst stdev {:.2f}\n\n'.format(
+                            f.write('Trn acc: {:.2f}, Trn stdev: {:.2f}, Val acc {:.2f}, Val stdev {:.2f}\n\n'.format(
                                 result[:,0].mean(), result[:,0].std(),
                                 result[:,1].mean(), result[:,1].std()
                             ))
@@ -389,8 +476,7 @@ if __name__ == '__main__':
                         help='Path to preprocessed not-Billboard data.')
     parser.add_argument('--path_save_model',
                         type=str,
-                        required=False,
-                        default='../models/',
-                        help='Where to save the trained model.')
+                        required=True,
+                        help='Where to save the trained model and related files.')
     args = parser.parse_args()
     main(args)
