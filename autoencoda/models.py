@@ -366,6 +366,7 @@ def main(args):
             y_pred = model.predict_classes(X[tst]).flatten()
             train_acc = history.history['acc']
             val_acc = history.history['val_acc']
+            # Keep paths tidy
             path_train_acc = os.path.join(args.path_save_model,
                                           'train_acc_NN.npy')
             path_val_acc = os.path.join(args.path_save_model,
@@ -374,6 +375,7 @@ def main(args):
                                        'NN-Y-pred-for-ROC.npy')
             path_y_true = os.path.join(args.path_save_model,
                                        'NN-Y-for-ROC.npy')
+            # Save data
             np.save(path_train_acc, train_acc)
             np.save(path_val_acc, val_acc)
             np.save(path_y_true, Y[tst])
