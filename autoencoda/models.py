@@ -391,19 +391,20 @@ def main(args):
             ]:
                 for drop in [0.2]:
                     for act in ['sigmoid']:
-                        model = deep_logistic_keras(X, Y,
-                            nodes_per_layer=arch,
-                            do_dropout=drop,
-                            activation_type=act
+                        model = deep_logistic_keras(X,
+                                                    nodes_per_layer=arch,
+                                                    do_dropout=drop,
+                                                    activation_type=act
                         )
-                        # K-fold cross-validation
+                        # Cross-validation
                         result = kfold_wrap(X, Y, model, args, k=5, seed=args.seed)
-                        print(result)
-                        to_write = 'Arch [ ' + ', '.join(map(str, arch)) + '], Drop ' + \
-                            str(drop) + ', Act ' + act + '\n'
-                        with open('results.txt', 'a+') as f:
+                        to_write = 'Arch [ ' + ', '.join(map(str, arch)) + \
+                            '], Drop ' + str(drop) + ', Act ' + act + '\n'
+                        path_results = os.path.join(args.path_save_model,
+                                                    'kfold-results-NN.txt')
+                        with open(path_results, 'a+') as f:
                             f.write(to_write)
-                            f.write('Trn acc: {:.2f}, Trn stdev: {:.2f}, Tst acc {:.2f}, Tst stdev {:.2f}\n\n'.format(
+                            f.write('Trn acc: {:.2f}, Trn stdev: {:.2f}, Val acc {:.2f}, Val stdev {:.2f}\n\n'.format(
                                 result[:,0].mean(), result[:,0].std(),
                                 result[:,1].mean(), result[:,1].std()
                             ))
