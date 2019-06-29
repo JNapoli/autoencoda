@@ -288,7 +288,7 @@ def main(args):
 
     # Test models
     if args.do_logistic:
-        model = logistic_regression_keras(X, Y)
+        model = logistic_regression_keras(X)
         history = model.fit(X[trn], Y[trn],
                   epochs=args.epochs,
                   validation_data=[X[tst], Y[tst]],
@@ -304,7 +304,7 @@ def main(args):
         path_y_true = os.path.join(args.path_save_model, 'logistic-Y-for-ROC.npy')
         # Save model and data
         model.save(path_model)
-        y_pred = model.predict_classes(X[tst]).flatten()
+        y_pred = model.predict(X[tst]).flatten()
         train_acc = history.history['acc']
         val_acc = history.history['val_acc']
         np.save(path_trn_acc, train_acc)
@@ -323,11 +323,11 @@ def main(args):
     if args.do_LSTM:
         assert len(X.shape) == 3
         X = X[:, :500, :]
-        model = LSTM_keras(X, Y)
+        model = LSTM_keras(X, Y, N=64)
         history = model.fit(X[trn], Y[trn],
                   epochs=args.epochs,
                   validation_data=[X[tst], Y[tst]],
-                  batch_size=300,
+                  batch_size=100,
                   verbose=1,
                   callbacks=[TensorBoard(log_dir=args.tensor_board)])
         # Keep paths tidy
@@ -337,7 +337,7 @@ def main(args):
         path_y_pred = os.path.join(args.path_save_model, 'LSTM-Y-pred-for-ROC.npy')
         path_y_true = os.path.join(args.path_save_model, 'LSTM-Y-for-ROC.npy')
         # Save model and data
-        y_pred = model.predict_classes(X[tst]).flatten()
+        y_pred = model.predict(X[tst]).flatten()
         y_true = Y[tst]
         train_acc = history.history['acc']
         val_acc = history.history['val_acc']
@@ -350,7 +350,7 @@ def main(args):
         if not args.explore_models:
             arch = [50, 1]
             act = 'sigmoid'
-            model = deep_logistic_keras(X[trn], Y[trn],
+            model = deep_logistic_keras(X[trn],
                 nodes_per_layer=arch,
                 do_dropout=args.fraction_dropout,
                 activation_type=act
@@ -366,7 +366,7 @@ def main(args):
                                       'model-NN.h5')
             model.save(path_model)
             logging.info('Saved model to {:s}'.format(path_model))
-            y_pred = model.predict_classes(X[tst]).flatten()
+            y_pred = model.predict(X[tst]).flatten()
             train_acc = history.history['acc']
             val_acc = history.history['val_acc']
             # Keep paths tidy
