@@ -91,15 +91,6 @@ def compute_spectrogram(track, **kwargs_spec):
     return track
 
 
-def compute_chromogram(track):
-    """Obtain chromogram of the provided track.
-    """
-    audio, sr = librosa.load(track['path_mp3'])
-    chrom =  librosa.feature.chroma_stft(y=audio, sr=sr)
-    track['chrom'] = chrom
-    return track
-
-
 def has_mp3_preview(track_URI, spotify):
     """Function to return whether the requested track has an mp3 preview available.
 
