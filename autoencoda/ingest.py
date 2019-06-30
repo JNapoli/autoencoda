@@ -68,6 +68,14 @@ def get_spotify_from_billboard(bb_track, bb_artist, spotify):
 
 def compute_spectrogram(track, **kwargs_spec):
     """Obtain a mel spectrogram from the raw track audio.
+
+    Args:
+        track (dict): Dictionary whose attributes correspond to features associated
+                      with the track.
+
+    Returns:
+        track (dict): Track with additional spectral features computed using
+                      librosa.
     """
     audio, sr = librosa.load(track['path_mp3'])
     sg = librosa.feature.melspectrogram(y=audio, sr=sr, **kwargs_spec)
