@@ -41,6 +41,7 @@ def main(args):
     t0 = time.time()
     appeared_hot_100 = get_hot_100_set(args.end_date,
                                        billboard.ChartData('hot-100'))
+    # Make this object a set in order to remove duplicate values.
     set_appeared_hot_100 = set(appeared_hot_100)
     elapsed = (time.time() - t0) / 60.0
     logging.info("Processing took {:.2f} minutes for ending \
