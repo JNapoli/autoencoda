@@ -137,6 +137,10 @@ def main(args):
                                    args.spotify_client_secret)
     logging.info('Done.')
 
+    # We can use these paths below
+    path_full_self = os.path.realpath(__file__)
+    path_base_self = os.path.dirname(path_full_self)
+
     # Option to continue.
     if args.ingest_billboard:
 
@@ -168,10 +172,12 @@ def main(args):
                 URI_track, URI_artist = bill_item[0], bill_item[1]
 
                 # Build track
-                path_tracks_billboard = '../data/cache_tracks_billboard/'
-                assert os.path.exists(path_tracks_billboard), \
+                if not os.path.exists(args.path_cache_billboard):
+                    os.mkdir(args.path_cache_billboard)
+                assert os.path.exists(args.path_cache_billboard), \
                        'Directory to contain Billboard tracks does not exist.'
-                path_track = os.path.join(path_tracks_billboard, URI_track + '.p')
+                path_track = os.path.join(args.path_cache_billboard,
+                                          URI_track + '.p')
 
                 # Keep track of artists and tracks in Billboard set.
                 URIs_billboard_tracks.append(URI_track)
@@ -205,7 +211,8 @@ def main(args):
                 continue
 
         # Keep track of what URIs we have in our data set.
-        with open('../data/cache/cache-URI-lists.p', 'wb') as f:
+        path_URI_list = os.path.join(path_base_self, '..', 'tmp', 'URIs-BB.p')
+        with open(path_URI_list, 'wb') as f:
             pickle.dump((URIs_billboard_tracks, URIs_billboard_artists), f,
                         protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -215,7 +222,8 @@ def main(args):
         logging.info('Loading cached URI lists.')
 
         # Load which URIs we have processed from Billboard.
-        with open('../data/cache/cache-URI-lists.p', 'rb') as f:
+        path_URI_list = os.path.join(path_base_self, '..', 'tmp', 'URIs-BB.p')
+        with open(path_URI_list, 'rb') as f:
             URIs = pickle.load(f)
         URIs_billboard_tracks, URIs_billboard_artists = URIs
         # Sanity check
@@ -243,10 +251,11 @@ def main(args):
                                                         spotify,
                                                         args.path_data_mp3,
                                                         billboard=False)
-                            path_tracks_not_billboard = '../data/cache_tracks_not_billboard/'
-                            assert os.path.exists(path_tracks_not_billboard), \
+                            if not os.path.exists(args.path_cache_not_billboard):
+                                os.mkdir(args.path_cache_not_billboard)
+                            assert os.path.exists(args.path_cache_not_billboard), \
                                    'Where do the not-Billboard tracks live?'
-                            path_track = os.path.join(path_tracks_not_billboard,
+                            path_track = os.path.join(args.path_cache_not_billboard,
                                                       t_URI + '.p')
                             # Cache track
                             with open(path_track, 'wb') as f:
@@ -280,6 +289,14 @@ if __name__ == '__main__':
                         required=True,
                         help='Directory in which to store mp3 files and other track \
                         data.')
+    parser.add_argument('--path_cache_billboard',
+                        type=str,
+                        required=True,
+                        help='Directory in which to store Billboard tracks.')
+    parser.add_argument('--path_cache_not_billboard',
+                        type=str,
+                        required=True,
+                        help='Directory in which to store not-Billboard tracks.')
     parser.add_argument('--spotify_client_id',
                         type=str,
                         required=True,
