@@ -219,10 +219,10 @@ def main(args):
             URIs = pickle.load(f)
         URIs_billboard_tracks, URIs_billboard_artists = URIs
         # Sanity check
-        assert 'track' in URIs_billboard_tracks[0], "'Track' should be in the \
-               track URIs!"
-        assert 'artist' in URIs_billboard_artists[0], "'Artist' should be in the \
-               track URIs!"
+        assert 'track' in URIs_billboard_tracks[0], \
+               "'Track' should be in the track URIs!"
+        assert 'artist' in URIs_billboard_artists[0],
+               "'Artist' should be in the track URIs!"
 
         artists_processed = []
         to_build = []
@@ -244,8 +244,8 @@ def main(args):
                                                         args.path_data_mp3,
                                                         billboard=False)
                             path_tracks_not_billboard = '../data/cache_tracks_not_billboard/'
-                            assert os.path.exists(path_tracks_not_billboard), 'Where \
-                                   do the not-Billboard tracks live?'
+                            assert os.path.exists(path_tracks_not_billboard), \
+                                   'Where do the not-Billboard tracks live?'
                             path_track = os.path.join(path_tracks_not_billboard,
                                                       t_URI + '.p')
                             # Cache track
@@ -301,10 +301,5 @@ if __name__ == '__main__':
                         required=False,
                         help='Whether to ingest songs that did not appear on \
                              billboard.')
-    parser.add_argument('--do_genres',
-                        type=int,
-                        default=0,
-                        required=False,
-                        help='Whether to extract genres.')
     args = parser.parse_args()
     main(args)
