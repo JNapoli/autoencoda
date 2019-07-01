@@ -273,13 +273,11 @@ if __name__ == '__main__':
     )
     parser.add_argument('--path_raw_dat_billboard',
                         type=str,
-                        required=False,
-                        default='../data/raw/billboard-scrape.p',
+                        required=True,
                         help='Path to file containing Billboard scrape result.')
     parser.add_argument('--path_data_mp3',
                         type=str,
-                        required=False,
-                        default='../data/data_mp3/',
+                        required=True,
                         help='Directory in which to store mp3 files and other track \
                         data.')
     parser.add_argument('--spotify_client_id',
@@ -301,5 +299,6 @@ if __name__ == '__main__':
                         required=False,
                         help='Whether to ingest songs that did not appear on \
                              billboard.')
+
     args = parser.parse_args()
     main(args)
