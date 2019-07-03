@@ -7,7 +7,18 @@ import time
 
 
 def get_hot_100_set(stop_date, chart):
-    """
+    """Get list of (title, artist) tuples for entries on the Billboard
+       Hot 100 chart from stop_date - present.
+
+    Args:
+        stop_date (str): Date at which to stop entry scraping. Date must be
+                         provided in format YYYY-MM-DD.
+        chart (ChartData): A billboard ChartData object containing the Hot 100
+                           entries.
+
+    Returns:
+        appeared_hot_100 (list): List of tuples of artists/songs that appeared
+                                 on the Hot 100 chart.
     """
     appeared_hot_100 = [
         (elem.title, elem.artist) for elem in chart
@@ -30,6 +41,7 @@ def main(args):
     t0 = time.time()
     appeared_hot_100 = get_hot_100_set(args.end_date,
                                        billboard.ChartData('hot-100'))
+    # Make this object a set in order to remove duplicate values.
     set_appeared_hot_100 = set(appeared_hot_100)
     elapsed = (time.time() - t0) / 60.0
     logging.info("Processing took {:.2f} minutes for ending \
