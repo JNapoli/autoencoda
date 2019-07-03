@@ -229,7 +229,7 @@ def main(args):
         # Sanity check
         assert 'track' in URIs_billboard_tracks[0], \
                "'Track' should be in the track URIs!"
-        assert 'artist' in URIs_billboard_artists[0],
+        assert 'artist' in URIs_billboard_artists[0], \
                "'Artist' should be in the track URIs!"
 
         artists_processed = []
