@@ -5,6 +5,8 @@ import pickle
 import requests
 import time
 
+import os.path as path
+
 
 def get_hot_100_set(stop_date, chart):
     """Get list of (title, artist) tuples for entries on the Billboard
@@ -36,7 +38,18 @@ def get_hot_100_set(stop_date, chart):
 
 
 def main(args):
-    logging.basicConfig(filename='billboard.log',
+    path_full_self = path.realpath(__file__)
+    path_base_self = path.dirname(path_full_self)
+    path_log = path.join(path_base_self,
+                         '..',
+                         'logs',
+                         'billboard.log')
+    path_save_pickle = path.join(path_base_self,
+                                 '..',
+                                 'data',
+                                 'billboard',
+                                 args.name_pickle)
+    logging.basicConfig(filename=path_log,
                         level=logging.DEBUG)
     t0 = time.time()
     appeared_hot_100 = get_hot_100_set(args.end_date,
@@ -46,7 +59,8 @@ def main(args):
     elapsed = (time.time() - t0) / 60.0
     logging.info("Processing took {:.2f} minutes for ending \
                   date {:s}.".format(elapsed, args.end_date))
-    with open(args.path_save, 'wb') as f:
+
+    with open(path_save_pickle, 'wb') as f:
         pickle.dump(set_appeared_hot_100, f, protocol=pickle.HIGHEST_PROTOCOL)
 
 
@@ -60,10 +74,10 @@ if __name__ == '__main__':
                         required=False,
                         default='2019-01-01',
                         help='Date format: YYYY-MM-DD')
-    parser.add_argument('--path_save',
+    parser.add_argument('--name_pickle',
                         type=str,
                         required=False,
-                        default='../data/raw/billboard-scrape.p',
+                        default='billboard.p',
                         help='File path for saving Hot 100 set.')
     args = parser.parse_args()
     main(args)
