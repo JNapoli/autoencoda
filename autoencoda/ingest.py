@@ -282,37 +282,37 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Use Spotify API to assemble dataset.'
     )
-    parser.add_argument('--path_raw_dat_billboard',
+    parser.add_argument('path_raw_dat_billboard',
                         type=str,
                         required=True,
                         help='Path to file containing Billboard scrape result.')
-    parser.add_argument('--path_data_mp3',
+    parser.add_argument('path_data_mp3',
                         type=str,
                         required=True,
                         help='Directory in which to store mp3 files and other track \
                         data.')
-    parser.add_argument('--path_cache_billboard',
+    parser.add_argument('path_cache_billboard',
                         type=str,
                         required=True,
                         help='Directory in which to store Billboard tracks.')
-    parser.add_argument('--path_cache_not_billboard',
+    parser.add_argument('path_cache_not_billboard',
                         type=str,
                         required=True,
                         help='Directory in which to store not-Billboard tracks.')
-    parser.add_argument('--spotify_client_id',
+    parser.add_argument('spotify_client_id',
                         type=str,
                         required=True,
                         help='Required credential to access Spotify API.')
-    parser.add_argument('--spotify_client_secret',
+    parser.add_argument('spotify_client_secret',
                         type=str,
                         required=True,
                         help='Required secret key to access Spotify API.')
-    parser.add_argument('--ingest_billboard',
+    parser.add_argument('ingest_billboard',
                         type=int,
                         default=0,
                         required=False,
                         help='Whether to ingest Billboard hot 100 entries.')
-    parser.add_argument('--ingest_non_hits',
+    parser.add_argument('ingest_non_hits',
                         type=int,
                         default=0,
                         required=False,
