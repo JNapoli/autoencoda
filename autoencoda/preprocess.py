@@ -60,8 +60,14 @@ def normalize_spectra(spectra):
 
 
 def main(args):
+    path_full_self = path.realpath(__file__)
+    path_base_self = path.dirname(path_full_self)
+    path_log = path.join(path_base_self,
+                         '..',
+                         'logs',
+                         'preprocess.log')
     # Set verbosity level for debugging
-    logging.basicConfig(filename='preprocess.log', level=logging.DEBUG)
+    logging.basicConfig(filename=path_log, level=logging.DEBUG)
 
     # Load raw data
     tracks_billboard = get_tracks_in_directory(args.tracks_billboard)
