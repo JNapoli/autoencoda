@@ -215,7 +215,7 @@ def main(args):
                 continue
 
         # Keep track of what URIs we have in our data set.
-        path_URI_list = os.path.join(path_base_self, '..', 'tmp', 'URIs-BB.p')
+        path_URI_list = os.path.join(path_base_self, '..', 'data', 'URIs-BB.p')
         with open(path_URI_list, 'wb') as f:
             pickle.dump((URIs_billboard_tracks, URIs_billboard_artists), f,
                         protocol=pickle.HIGHEST_PROTOCOL)
@@ -226,7 +226,7 @@ def main(args):
         logging.info('Loading cached URI lists.')
 
         # Load which URIs we have processed from Billboard.
-        path_URI_list = os.path.join(path_base_self, '..', 'tmp', 'URIs-BB.p')
+        path_URI_list = os.path.join(path_base_self, '..', 'data', 'URIs-BB.p')
         with open(path_URI_list, 'rb') as f:
             URIs = pickle.load(f)
         URIs_billboard_tracks, URIs_billboard_artists = URIs
