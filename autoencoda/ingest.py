@@ -12,6 +12,7 @@ import wget
 import preprocess
 
 import numpy as np
+import os.path as path
 import spotipy.util as su
 
 
@@ -180,8 +181,7 @@ def main(args):
                 # Build track
                 if not os.path.exists(args.path_cache_billboard):
                     os.mkdir(args.path_cache_billboard)
-                path_track = os.path.join(args.path_cache_billboard,
-                                          URI_track + '.p')
+                path_track = os.path.join(args.path_cache_billboard, URI_track + '.p')
 
                 # Keep track of artists and tracks in Billboard set.
                 URIs_billboard_tracks.append(URI_track)
@@ -284,28 +284,22 @@ if __name__ == '__main__':
     )
     parser.add_argument('path_raw_dat_billboard',
                         type=str,
-                        required=True,
                         help='Path to file containing Billboard scrape result.')
     parser.add_argument('path_data_mp3',
                         type=str,
-                        required=True,
                         help='Directory in which to store mp3 files and other track \
                         data.')
     parser.add_argument('path_cache_billboard',
                         type=str,
-                        required=True,
                         help='Directory in which to store Billboard tracks.')
     parser.add_argument('path_cache_not_billboard',
                         type=str,
-                        required=True,
                         help='Directory in which to store not-Billboard tracks.')
     parser.add_argument('spotify_client_id',
                         type=str,
-                        required=True,
                         help='Required credential to access Spotify API.')
     parser.add_argument('spotify_client_secret',
                         type=str,
-                        required=True,
                         help='Required secret key to access Spotify API.')
     parser.add_argument('ingest_billboard',
                         type=int,
