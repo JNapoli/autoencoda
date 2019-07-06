@@ -47,7 +47,6 @@ def main(args):
     path_save_pickle = path.join(path_base_self,
                                  '..',
                                  'data',
-                                 'billboard',
                                  args.name_pickle)
     logging.basicConfig(filename=path_log,
                         level=logging.DEBUG)
@@ -76,7 +75,7 @@ if __name__ == '__main__':
     parser.add_argument('--name_pickle',
                         type=str,
                         required=False,
-                        default='billboard.p',
+                        default='billboard-scrape.p',
                         help='File path for saving Hot 100 set.')
     args = parser.parse_args()
     main(args)
