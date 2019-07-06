@@ -123,7 +123,6 @@ def build_track(track_URI, artist_URI, spotify, path_data_mp3, billboard=False):
     track['path_mp3'] = path_mp3
     track['billboard'] = billboard
     track = compute_spectrogram(track)
-    track = compute_chromogram(track)
     return track
 
 
