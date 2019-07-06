@@ -6,6 +6,7 @@ import pickle
 
 import matplotlib.pyplot as plt
 import numpy as np
+import os.path as path
 
 from librosa.display import specshow
 
@@ -33,9 +34,7 @@ def get_tracks_in_directory(path_dir):
         tracks (list): List of dictionaries containing track data.
     """
     tracks = []
-    dir_contents = os.listdir(path_dir)
-    # Make sure directory contains only pickled tracks.
-    assert all([elem[-2:] == '.p' for elem in dir_contents])
+    dir_contents = [elem for elem in os.listdir(path_dir) if elem[-2:] == '.p']
     for fn in dir_contents:
         path_full = os.path.join(path_dir, fn)
         tracks.append(read_pickle(path_full))
