@@ -140,17 +140,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Preprocess and store the data for my model.'
     )
-    parser.add_argument('--tracks_billboard',
+    parser.add_argument('tracks_billboard',
                         type=str,
-                        required=True,
                         help='Path containing tracks that appeared on Billboard.')
-    parser.add_argument('--tracks_not_billboard',
+    parser.add_argument('tracks_not_billboard',
                         type=str,
-                        required=True,
                         help='Path containing tracks that did not appear on Billboard.')
-    parser.add_argument('--preprocessed',
+    parser.add_argument('preprocessed',
                         type=str,
-                        required=True,
                         help='Path to the directory in which to save preprocessed data.')
     args = parser.parse_args()
     main(args)
