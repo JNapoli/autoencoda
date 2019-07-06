@@ -301,12 +301,12 @@ if __name__ == '__main__':
     parser.add_argument('spotify_client_secret',
                         type=str,
                         help='Required secret key to access Spotify API.')
-    parser.add_argument('ingest_billboard',
+    parser.add_argument('-ingest_billboard',
                         type=int,
                         default=0,
                         required=False,
                         help='Whether to ingest Billboard hot 100 entries.')
-    parser.add_argument('ingest_non_hits',
+    parser.add_argument('-ingest_non_hits',
                         type=int,
                         default=0,
                         required=False,
