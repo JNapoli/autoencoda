@@ -466,13 +466,11 @@ if __name__ == '__main__':
                         help='Whether to explore and cross validate models.')
     parser.add_argument('--path_bb_data',
                         type=str,
-                        required=False,
-                        default='../data/preprocessed/preprocessed-billboard-no-subtract-scaled.npy',
+                        required=True,
                         help='Path to preprocessed Billboard data.')
     parser.add_argument('--path_not_bb_data',
                         type=str,
-                        required=False,
-                        default='../data/preprocessed/preprocessed-not-billboard-no-subtract-scaled.npy',
+                        required=True,
                         help='Path to preprocessed not-Billboard data.')
     parser.add_argument('--path_save_model',
                         type=str,
