@@ -67,6 +67,9 @@ def main(args):
                          'logs',
                          'preprocess.log')
 
+    # Create directory to save our results
+    if not os.path.exists(args.preprocessed): os.mkdir(args.preprocessed)
+
     # Set verbosity level for debugging
     logging.basicConfig(filename=path_log, level=logging.DEBUG)
 
