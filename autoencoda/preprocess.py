@@ -66,6 +66,7 @@ def main(args):
                          '..',
                          'logs',
                          'preprocess.log')
+
     # Set verbosity level for debugging
     logging.basicConfig(filename=path_log, level=logging.DEBUG)
 
@@ -138,18 +139,15 @@ if __name__ == '__main__':
     )
     parser.add_argument('--tracks_billboard',
                         type=str,
-                        required=False,
-                        default='../data/cache_tracks_billboard/',
+                        required=True,
                         help='Path containing tracks that appeared on Billboard.')
     parser.add_argument('--tracks_not_billboard',
                         type=str,
-                        required=False,
-                        default='../data/cache_tracks_not_billboard/',
+                        required=True,
                         help='Path containing tracks that did not appear on Billboard.')
     parser.add_argument('--preprocessed',
                         type=str,
-                        required=False,
-                        default='../data/preprocessed/',
-                        help='Path containing preprocessed data.')
+                        required=True,
+                        help='Path to the directory in which to save preprocessed data.')
     args = parser.parse_args()
     main(args)
