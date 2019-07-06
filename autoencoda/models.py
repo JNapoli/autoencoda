@@ -268,7 +268,13 @@ def log_data_summary(X, Y):
 
 
 def main(args):
-    logging.basicConfig(filename='models.log', level=logging.DEBUG)
+    path_full_self = path.realpath(__file__)
+    path_base_self = path.dirname(path_full_self)
+    path_log = path.join(path_base_self,
+                         '..',
+                         'logs',
+                         'models.log')
+    logging.basicConfig(filename=path_log, level=logging.DEBUG)
     np.random.seed(args.seed)
 
     # Get data
