@@ -59,7 +59,6 @@ def main(args):
     elapsed = (time.time() - t0) / 60.0
     logging.info("Processing took {:.2f} minutes for ending \
                   date {:s}.".format(elapsed, args.end_date))
-
     with open(path_save_pickle, 'wb') as f:
         pickle.dump(set_appeared_hot_100, f, protocol=pickle.HIGHEST_PROTOCOL)
 

@@ -127,8 +127,14 @@ def build_track(track_URI, artist_URI, spotify, path_data_mp3, billboard=False):
 
 
 def main(args):
+    path_full_self = path.realpath(__file__)
+    path_base_self = path.dirname(path_full_self)
+    path_log = path.join(path_base_self,
+                         '..',
+                         'logs',
+                         'ingestion.log')
     # Set verbosity level for debugging.
-    logging.basicConfig(filename='ingestion.log',
+    logging.basicConfig(filename=path_log,
                         level=logging.DEBUG)
 
     # Get Spotify instance for querying Spotify API.
@@ -137,9 +143,9 @@ def main(args):
                                    args.spotify_client_secret)
     logging.info('Done.')
 
-    # We can use these paths below
-    path_full_self = os.path.realpath(__file__)
-    path_base_self = os.path.dirname(path_full_self)
+    # Create directory to store mp3s
+    if not os.path.exists(args.path_data_mp3):
+        os.mkdir(args.path_data_mp3)
 
     # Option to continue.
     if args.ingest_billboard:
@@ -174,8 +180,6 @@ def main(args):
                 # Build track
                 if not os.path.exists(args.path_cache_billboard):
                     os.mkdir(args.path_cache_billboard)
-                assert os.path.exists(args.path_cache_billboard), \
-                       'Directory to contain Billboard tracks does not exist.'
                 path_track = os.path.join(args.path_cache_billboard,
                                           URI_track + '.p')
 
@@ -253,8 +257,6 @@ def main(args):
                                                         billboard=False)
                             if not os.path.exists(args.path_cache_not_billboard):
                                 os.mkdir(args.path_cache_not_billboard)
-                            assert os.path.exists(args.path_cache_not_billboard), \
-                                   'Where do the not-Billboard tracks live?'
                             path_track = os.path.join(args.path_cache_not_billboard,
                                                       t_URI + '.p')
                             # Cache track
@@ -316,6 +318,5 @@ if __name__ == '__main__':
                         required=False,
                         help='Whether to ingest songs that did not appear on \
                              billboard.')
-
     args = parser.parse_args()
     main(args)
