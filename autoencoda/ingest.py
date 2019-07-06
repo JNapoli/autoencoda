@@ -12,6 +12,7 @@ import wget
 import preprocess
 
 import numpy as np
+import os.path as path
 import spotipy.util as su
 
 
@@ -122,13 +123,18 @@ def build_track(track_URI, artist_URI, spotify, path_data_mp3, billboard=False):
     track['path_mp3'] = path_mp3
     track['billboard'] = billboard
     track = compute_spectrogram(track)
-    track = compute_chromogram(track)
     return track
 
 
 def main(args):
+    path_full_self = path.realpath(__file__)
+    path_base_self = path.dirname(path_full_self)
+    path_log = path.join(path_base_self,
+                         '..',
+                         'logs',
+                         'ingestion.log')
     # Set verbosity level for debugging.
-    logging.basicConfig(filename='ingestion.log',
+    logging.basicConfig(filename=path_log,
                         level=logging.DEBUG)
 
     # Get Spotify instance for querying Spotify API.
@@ -137,9 +143,9 @@ def main(args):
                                    args.spotify_client_secret)
     logging.info('Done.')
 
-    # We can use these paths below
-    path_full_self = os.path.realpath(__file__)
-    path_base_self = os.path.dirname(path_full_self)
+    # Create directory to store mp3s
+    if not os.path.exists(args.path_data_mp3):
+        os.mkdir(args.path_data_mp3)
 
     # Option to continue.
     if args.ingest_billboard:
@@ -174,10 +180,7 @@ def main(args):
                 # Build track
                 if not os.path.exists(args.path_cache_billboard):
                     os.mkdir(args.path_cache_billboard)
-                assert os.path.exists(args.path_cache_billboard), \
-                       'Directory to contain Billboard tracks does not exist.'
-                path_track = os.path.join(args.path_cache_billboard,
-                                          URI_track + '.p')
+                path_track = os.path.join(args.path_cache_billboard, URI_track + '.p')
 
                 # Keep track of artists and tracks in Billboard set.
                 URIs_billboard_tracks.append(URI_track)
@@ -211,7 +214,7 @@ def main(args):
                 continue
 
         # Keep track of what URIs we have in our data set.
-        path_URI_list = os.path.join(path_base_self, '..', 'tmp', 'URIs-BB.p')
+        path_URI_list = os.path.join(path_base_self, '..', 'data', 'URIs-BB.p')
         with open(path_URI_list, 'wb') as f:
             pickle.dump((URIs_billboard_tracks, URIs_billboard_artists), f,
                         protocol=pickle.HIGHEST_PROTOCOL)
@@ -222,14 +225,14 @@ def main(args):
         logging.info('Loading cached URI lists.')
 
         # Load which URIs we have processed from Billboard.
-        path_URI_list = os.path.join(path_base_self, '..', 'tmp', 'URIs-BB.p')
+        path_URI_list = os.path.join(path_base_self, '..', 'data', 'URIs-BB.p')
         with open(path_URI_list, 'rb') as f:
             URIs = pickle.load(f)
         URIs_billboard_tracks, URIs_billboard_artists = URIs
         # Sanity check
         assert 'track' in URIs_billboard_tracks[0], \
                "'Track' should be in the track URIs!"
-        assert 'artist' in URIs_billboard_artists[0],
+        assert 'artist' in URIs_billboard_artists[0], \
                "'Artist' should be in the track URIs!"
 
         artists_processed = []
@@ -253,8 +256,6 @@ def main(args):
                                                         billboard=False)
                             if not os.path.exists(args.path_cache_not_billboard):
                                 os.mkdir(args.path_cache_not_billboard)
-                            assert os.path.exists(args.path_cache_not_billboard), \
-                                   'Where do the not-Billboard tracks live?'
                             path_track = os.path.join(args.path_cache_not_billboard,
                                                       t_URI + '.p')
                             # Cache track
@@ -280,42 +281,35 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Use Spotify API to assemble dataset.'
     )
-    parser.add_argument('--path_raw_dat_billboard',
+    parser.add_argument('path_raw_dat_billboard',
                         type=str,
-                        required=True,
                         help='Path to file containing Billboard scrape result.')
-    parser.add_argument('--path_data_mp3',
+    parser.add_argument('path_data_mp3',
                         type=str,
-                        required=True,
                         help='Directory in which to store mp3 files and other track \
                         data.')
-    parser.add_argument('--path_cache_billboard',
+    parser.add_argument('path_cache_billboard',
                         type=str,
-                        required=True,
                         help='Directory in which to store Billboard tracks.')
-    parser.add_argument('--path_cache_not_billboard',
+    parser.add_argument('path_cache_not_billboard',
                         type=str,
-                        required=True,
                         help='Directory in which to store not-Billboard tracks.')
-    parser.add_argument('--spotify_client_id',
+    parser.add_argument('spotify_client_id',
                         type=str,
-                        required=True,
                         help='Required credential to access Spotify API.')
-    parser.add_argument('--spotify_client_secret',
+    parser.add_argument('spotify_client_secret',
                         type=str,
-                        required=True,
                         help='Required secret key to access Spotify API.')
-    parser.add_argument('--ingest_billboard',
+    parser.add_argument('-ingest_billboard',
                         type=int,
                         default=0,
                         required=False,
                         help='Whether to ingest Billboard hot 100 entries.')
-    parser.add_argument('--ingest_non_hits',
+    parser.add_argument('-ingest_non_hits',
                         type=int,
                         default=0,
                         required=False,
                         help='Whether to ingest songs that did not appear on \
                              billboard.')
-
     args = parser.parse_args()
     main(args)

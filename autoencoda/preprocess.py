@@ -6,6 +6,7 @@ import pickle
 
 import matplotlib.pyplot as plt
 import numpy as np
+import os.path as path
 
 from librosa.display import specshow
 
@@ -33,9 +34,7 @@ def get_tracks_in_directory(path_dir):
         tracks (list): List of dictionaries containing track data.
     """
     tracks = []
-    dir_contents = os.listdir(path_dir)
-    # Make sure directory contains only pickled tracks.
-    assert all([elem[-2:] == '.p' for elem in dir_contents])
+    dir_contents = [elem for elem in os.listdir(path_dir) if elem[-2:] == '.p']
     for fn in dir_contents:
         path_full = os.path.join(path_dir, fn)
         tracks.append(read_pickle(path_full))
@@ -60,8 +59,18 @@ def normalize_spectra(spectra):
 
 
 def main(args):
+    path_full_self = path.realpath(__file__)
+    path_base_self = path.dirname(path_full_self)
+    path_log = path.join(path_base_self,
+                         '..',
+                         'logs',
+                         'preprocess.log')
+
+    # Create directory to save our results
+    if not os.path.exists(args.preprocessed): os.mkdir(args.preprocessed)
+
     # Set verbosity level for debugging
-    logging.basicConfig(filename='preprocess.log', level=logging.DEBUG)
+    logging.basicConfig(filename=path_log, level=logging.DEBUG)
 
     # Load raw data
     tracks_billboard = get_tracks_in_directory(args.tracks_billboard)
@@ -130,20 +139,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Preprocess and store the data for my model.'
     )
-    parser.add_argument('--tracks_billboard',
+    parser.add_argument('tracks_billboard',
                         type=str,
-                        required=False,
-                        default='../data/cache_tracks_billboard/',
                         help='Path containing tracks that appeared on Billboard.')
-    parser.add_argument('--tracks_not_billboard',
+    parser.add_argument('tracks_not_billboard',
                         type=str,
-                        required=False,
-                        default='../data/cache_tracks_not_billboard/',
                         help='Path containing tracks that did not appear on Billboard.')
-    parser.add_argument('--preprocessed',
+    parser.add_argument('preprocessed',
                         type=str,
-                        required=False,
-                        default='../data/preprocessed/',
-                        help='Path containing preprocessed data.')
+                        help='Path to the directory in which to save preprocessed data.')
     args = parser.parse_args()
     main(args)

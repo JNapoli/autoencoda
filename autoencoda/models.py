@@ -4,6 +4,7 @@ import os
 import sys
 
 import numpy as np
+import os.path as path
 import tensorflow.keras as k
 
 from sklearn.metrics import classification_report
@@ -268,7 +269,13 @@ def log_data_summary(X, Y):
 
 
 def main(args):
-    logging.basicConfig(filename='models.log', level=logging.DEBUG)
+    path_full_self = path.realpath(__file__)
+    path_base_self = path.dirname(path_full_self)
+    path_log = path.join(path_base_self,
+                         '..',
+                         'logs',
+                         'models.log')
+    logging.basicConfig(filename=path_log, level=logging.DEBUG)
     np.random.seed(args.seed)
 
     # Get data
@@ -466,13 +473,11 @@ if __name__ == '__main__':
                         help='Whether to explore and cross validate models.')
     parser.add_argument('--path_bb_data',
                         type=str,
-                        required=False,
-                        default='../data/preprocessed/preprocessed-billboard-no-subtract-scaled.npy',
+                        required=True,
                         help='Path to preprocessed Billboard data.')
     parser.add_argument('--path_not_bb_data',
                         type=str,
-                        required=False,
-                        default='../data/preprocessed/preprocessed-not-billboard-no-subtract-scaled.npy',
+                        required=True,
                         help='Path to preprocessed not-Billboard data.')
     parser.add_argument('--path_save_model',
                         type=str,
