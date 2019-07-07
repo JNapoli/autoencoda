@@ -11,7 +11,7 @@ probability of an audio sample appearing on the Billboard Hot 100 chart,
 a ranking of the top 100 songs of the week. 
 
 
-![Alt text](/relative/path/to/img.jpg?raw=true "Optional Title")
+![Alt text](/figs/spectrogram.jpg?raw=true "Optional Title")
 
 
 
