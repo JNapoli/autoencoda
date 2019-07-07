@@ -31,6 +31,13 @@ pip install -r requirements.txt
 
 ## Usage
 
+Each python script here requires arguments. List all script arguments
+and short descriptions of each argument by running:
+
+```python
+
+python SCRIPT-NAME.py --help
+```
 
 ```python
 python autoencoda/billboard_query.py --path_save /Users/joe/Desktop/test-dependencies/autoencoda/data/billboard/billboard-scrape.p
