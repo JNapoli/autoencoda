@@ -34,12 +34,15 @@ pip install -r requirements.txt
 Each python script here requires arguments. List all script arguments
 and short descriptions of each argument by running:
 
-:::text
+```bash
 python SCRIPT-NAME.py --help
+```
 
+The most common usage will be to make a prediction on a new track. This
+can be done by running:
 
-```python
-python autoencoda/billboard_query.py --path_save /Users/joe/Desktop/test-dependencies/autoencoda/data/billboard/billboard-scrape.p
+```bash
+python predict.py --path_track /FULL/PATH/TO/AUDIO/FILE/track.mp3
 ```
 
 ## Contributing
