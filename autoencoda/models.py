@@ -10,16 +10,16 @@ import tensorflow.keras as k
 from sklearn.metrics import classification_report
 from sklearn.model_selection import StratifiedKFold, StratifiedShuffleSplit
 from sklearn.svm import SVC
-from tensorflow.keras.callbacks import ModelCheckpoint, TensorBoard
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard
 from tensorflow.keras.layers import Activation, BatchNormalization, \
                                     Dense, Dropout, LSTM
-from tensorflow.keras.models import Sequential
+from tensorflow.keras.models import Sequential, load_model
 
 
 def LSTM_keras(X, Y,
                N=32,
                loss_type='binary_crossentropy',
-               optimizer=k.optimizers.Adam(lr=0.01),
+               optimizer=k.optimizers.Adam(lr=0.001),
                do_dropout=None,
                metrics_list=['accuracy']):
     """Build an LSTM model in Keras.
@@ -296,12 +296,23 @@ def main(args):
     # Test models
     if args.do_logistic:
         model = logistic_regression_keras(X)
+        path_checkpoint = os.path.join(args.path_save_model, 'best_model.h5')
         history = model.fit(X[trn], Y[trn],
                   epochs=args.epochs,
                   validation_data=[X[tst], Y[tst]],
                   batch_size=300,
                   verbose=1,
-                  callbacks=[TensorBoard(log_dir=args.tensor_board)]
+                  callbacks=[TensorBoard(log_dir=args.tensor_board),
+                             EarlyStopping(monitor='val_acc',
+                                           mode='max',
+                                           verbose=1,
+                                           patience=10000),
+                             ModelCheckpoint(path_checkpoint,
+                                             monitor='val_acc',
+                                             mode='max',
+                                             verbose=1, 
+                                             save_best_only=True)]
+
         )
         # Keep paths tidy
         path_model = os.path.join(args.path_save_model, 'model-logistic.h5')
@@ -311,6 +322,8 @@ def main(args):
         path_y_true = os.path.join(args.path_save_model, 'logistic-Y-for-ROC.npy')
         # Save model and data
         model.save(path_model)
+        # Load best model
+        model = load_model(path_checkpoint)
         y_pred = model.predict(X[tst]).flatten()
         train_acc = history.history['acc']
         val_acc = history.history['val_acc']
@@ -329,14 +342,25 @@ def main(args):
                 ))
     if args.do_LSTM:
         assert len(X.shape) == 3
-        X = X[:, :500, :]
+        X = X[:, :200, :]
         model = LSTM_keras(X, Y, N=64)
+        path_checkpoint = os.path.join(args.path_save_model, 'best_model.h5')
         history = model.fit(X[trn], Y[trn],
                   epochs=args.epochs,
                   validation_data=[X[tst], Y[tst]],
-                  batch_size=100,
+                  batch_size=300,
                   verbose=1,
-                  callbacks=[TensorBoard(log_dir=args.tensor_board)])
+                  callbacks=[TensorBoard(log_dir=args.tensor_board),
+                             EarlyStopping(monitor='val_acc',
+                                           mode='max',
+                                           verbose=1,
+                                           patience=100),
+                             ModelCheckpoint(path_checkpoint,
+                                             monitor='val_acc',
+                                             mode='max',
+                                             verbose=1, 
+                                             save_best_only=True)]
+        )
         # Keep paths tidy
         path_model = os.path.join(args.path_save_model, 'model-LSTM.h5')
         path_trn_acc = os.path.join(args.path_save_model, 'train-acc-LSTM.npy')
@@ -344,35 +368,49 @@ def main(args):
         path_y_pred = os.path.join(args.path_save_model, 'LSTM-Y-pred-for-ROC.npy')
         path_y_true = os.path.join(args.path_save_model, 'LSTM-Y-for-ROC.npy')
         # Save model and data
+        model.save(path_model)
+        # Load best model
+        model = load_model(path_checkpoint)
         y_pred = model.predict(X[tst]).flatten()
         y_true = Y[tst]
         train_acc = history.history['acc']
         val_acc = history.history['val_acc']
-        model.save(path_model)
         np.save(path_trn_acc, train_acc)
         np.save(path_val_acc, val_acc)
         np.save(path_y_pred,  y_pred)
         np.save(path_y_true,  y_true)
     if args.do_NN:
         if not args.explore_models:
-            arch = [50, 1]
+            arch = [100, 50, 1]
             act = 'sigmoid'
             model = deep_logistic_keras(X[trn],
                 nodes_per_layer=arch,
                 do_dropout=args.fraction_dropout,
                 activation_type=act
             )
+            path_checkpoint = os.path.join(args.path_save_model, 'best_model.h5')
             history = model.fit(X[trn], Y[trn],
                       epochs=args.epochs,
                       validation_data=[X[tst], Y[tst]],
                       batch_size=300,
                       verbose=1,
-                      callbacks=[TensorBoard(log_dir=args.tensor_board)]
+                      callbacks=[TensorBoard(log_dir=args.tensor_board),
+                                 EarlyStopping(monitor='val_acc',
+                                               mode='max',
+                                               verbose=1,
+                                               patience=10000),
+                                 ModelCheckpoint(path_checkpoint,
+                                                 monitor='val_acc',
+                                                 mode='max',
+                                                 verbose=1, 
+                                                 save_best_only=True)]
             )
             path_model = os.path.join(args.path_save_model,
                                       'model-NN.h5')
             model.save(path_model)
             logging.info('Saved model to {:s}'.format(path_model))
+            # Load best model
+            model = load_model(path_checkpoint)
             y_pred = model.predict(X[tst]).flatten()
             train_acc = history.history['acc']
             val_acc = history.history['val_acc']
