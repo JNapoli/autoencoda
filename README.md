@@ -22,10 +22,10 @@ Clone the Hit Predict repo:
 git clone https://github.com/JNapoli/autoencoda.git
 ```
 
-The most straightforward way to install required dependencies is using
-miniconda3. In your preferred conda environment, ensure that the package manager
-[pip](https://pip.pypa.io/en/stable/) is installed and then use 
-requirements.txt in the repo root directory to install dependencies:
+The most straightforward way to install required dependencies is
+creating a virtual env using miniconda3 and Python version 3.7.3.
+Ensure that the package manager [pip](https://pip.pypa.io/en/stable/) is
+installed, then use requirements.txt in the repo root directory to install dependencies:
 ```bash
 pip install -r requirements.txt
 ```
