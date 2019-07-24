@@ -32,15 +32,14 @@ pip install -r requirements.txt
 
 ## Usage
 
-Each python script here requires arguments. List all script arguments
-and short descriptions of each argument by running:
+Scripts to execute the full project pipeline can be found in the autoencoda subdirectory of the repo root directory. Each script requires arguments, which can be listed by running:
 
 ```bash
 python SCRIPT-NAME.py --help
 ```
 
 The most common usage will be to make a prediction on a new track. This
-can be done by running:
+can be done by providing the full mp3 file path to the predict.py script:
 
 ```bash
 python predict.py --path_track /FULL/PATH/TO/AUDIO/FILE/track.mp3
