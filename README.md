@@ -17,7 +17,14 @@ different frequencies present in the music.
 
 ## Installation 
 
-The following steps have been verified to be reproducible on MacOS. The code uses python 3.7.3 and can be installed as follows:
+The following steps have been verified to be reproducible on MacOS. The code requires python version 3.6.8. It is recommended to first create and activate a python environment using Conda:
+
+```bash
+conda create -n TESTING python=3.6.8
+source activate TESTING
+```
+
+This package can then be downloaded and run as follows:
 
 1. Clone this repo using:
 ```bash
