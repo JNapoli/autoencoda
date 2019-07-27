@@ -4,7 +4,7 @@ Hit Predict is a Python library for predicting the success of your music.
 
 ## Overview
 
-This repo contains Python scripts for building a data ingestion,
+This repo contains scripts for building a data ingestion,
 pre-processing, and modeling pipeline to build a model that predicts the
 probability of an audio sample appearing on the Billboard Hot 100 chart,
 a ranking of the top 100 songs of the week. 
@@ -15,34 +15,65 @@ different frequencies present in the music.
 
 ![ScreenShot](/figs/spectrogram.png)
 
-## Installation
+## Installation 
 
-Clone the Hit Predict repo:
+The following steps have been verified to be reproducible on MacOS. The code requires python version 3.6.8. It is recommended to first create and activate a python environment using [Miniconda](https://docs.conda.io/en/latest/miniconda.html):
+
 ```bash
-git clone https://github.com/JNapoli/autoencoda.git
+conda create -n TESTING python=3.6.8
+source activate TESTING
 ```
 
-The most straightforward way to install required dependencies is
-creating a virtual env using miniconda3 and Python version 3.7.3.
-Ensure that the package manager [pip](https://pip.pypa.io/en/stable/) is
-installed, then use requirements.txt in the repo root directory to install dependencies:
+This package can then be downloaded and run as follows:
+
+1. Clone this repo using:
 ```bash
-pip install -r requirements.txt
+git clone https://github.com/JNapoli/autoencoda.git
+cd autoencoda/
+```
+
+2. Create a virtual environment (ensure that [Venv](https://docs.python.org/3.6/library/venv.html#module-venv) is available):
+```bash
+python3 -m venv my-env
+source my-env/bin/activate
+```
+
+3. Install required packages via pip3:
+```bash
+pip3 install -r requirements.txt
 ```
 
 ## Usage
 
-Scripts to execute the full project pipeline can be found in the autoencoda subdirectory of the repo root directory. Each script requires arguments, which can be listed by running:
+### Minimal use case
+
+The most common use case will be to make a prediction on a new mp3 file. This
+may be done by providing the mp3 file's full path to the prediction script:
 
 ```bash
-python SCRIPT-NAME.py --help
+python3 predict.py --path_track /FULL/PATH/TO/AUDIO/FILE/track.mp3
 ```
 
-The most common usage will be to make a prediction on a new track. This
-can be done by providing the full mp3 file path to the predict.py script:
+### Full pipeline
+
+For each script in the [autoencoda](/autoencoda/) subdirectory, arguments and their descriptions can be viewed as follows:
 
 ```bash
-python predict.py --path_track /FULL/PATH/TO/AUDIO/FILE/track.mp3
+python3 SCRIPT-NAME.py --help
+```
+
+The full data ingestion and modeling pipeline can be executed as follows: 
+
+1. Run [billboard_query.py](/autoencoda/billboard_query.py), which uses the [billboard.py](https://github.com/guoguo12/billboard-charts) package to scrape songs from the [Billboard](https://www.billboard.com/charts/hot-100) Hot-100 chart. This generates a set of tracks that appeared on the chart from a user-specified date to the present.
+
+2. Run [ingest.py](/autoencoda/ingest.py) to get mp3 samples for each track in the set using the [Spotipy](https://spotipy.readthedocs.io/en/latest/) package and to featurize them using [librosa](https://github.com/librosa). A Spotify [Client ID](https://developer.spotify.com/documentation/general/guides/app-settings/) and secret key will be required to make requests via the Spotify API, both of which can be passed as arguments to the script.
+
+3. Run [preprocess.py](/autoencoda/preprocess.py) to pre-process the spectrograms in order to use them as features for model training. 
+
+4. [Train](/autoencoda/models.py) models to the data. Several custom models have been implemented using [Keras](https://www.tensorflow.org/guide/keras). For more information about the script arguments, please use:
+
+```bash
+python3 models.py --help
 ```
 
 ## Contributing
