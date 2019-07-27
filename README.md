@@ -15,19 +15,25 @@ different frequencies present in the music.
 
 ![ScreenShot](/figs/spectrogram.png)
 
-## Installation
+## Installation [MacOS and Linux]
 
-Clone the Hit Predict repo:
+The code uses python 3.7.3 and can be installed via the following steps:
+
+1. Clone this repo using:
 ```bash
 git clone https://github.com/JNapoli/autoencoda.git
+cd autoencoda/
 ```
 
-The most straightforward way to install required dependencies is
-creating a virtual env using miniconda3 and Python version 3.7.3.
-Ensure that the package manager [pip](https://pip.pypa.io/en/stable/) is
-installed, then use requirements.txt in the repo root directory to install dependencies:
+2. Create a virtual environment (ensure that [Venv](https://docs.python.org/3.6/library/venv.html#module-venv) is available):
 ```bash
-pip install -r requirements.txt
+python3 -m venv my-env
+source my-env/bin/activate
+```
+
+3. Install required packages via pip3:
+```bash
+pip3 install -r requirements.txt
 ```
 
 ## Usage
